@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// model Address {
+//   id        Int     @id @default(autoincrement())
+//   tag       String
+//   phone     String
+//   address   String
+//   landmark  String? 
+//   pincode   String
+//   city      String
+//   state     String
+//   country   String
+// }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+
+  buyers    Buyer[]
+  addresses Address[]
+  products  Product[]
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+}
+
+model Buyer {
+  id              Int    @id @default(autoincrement())
+  userId          Int
+  user            User   @relation(fields: [userId], references: [id])
+
+  name            String
+  phone           String
+  alternateNumber String?
+  email           String?
+
+  orders          Order[]
+
+  // @@unique([userId, phone]) //Remove
+}
+
+model Address {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  user      User   @relation(fields: [userId], references: [id])
+
+  tag       String
+  phone     String
+  address   String
+  landmark  String?
+  pincode   String
+  city      String
+  state     String
+  country   String
+
+  shippingOrders Order[] @relation("ShippingAddress")
+  rtoOrders      Order[] @relation("RTOAddress")
+
+  @@unique([userId, tag])
+}
+
+model Product {
+  // unit price
+  id       Int    @id @default(autoincrement())
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id])
+
+  name     String
+  category String
+  SKU      String?
+  HSN      String?
+  unitPrice Float
+
+  orderProducts OrderProduct[]
+
+  @@unique([userId, name])
+}
+
+model Order {
+  //status field enum
+  //applicable weight
+  id              Int    @id @default(autoincrement())
+  orderNo         Int    @default(autoincrement())
+  userId          Int
+  user            User   @relation(fields: [userId], references: [id])
+
+  buyerId         Int
+  buyer           Buyer  @relation(fields: [buyerId], references: [id])
+
+  addressId       Int
+  address         Address @relation("ShippingAddress", fields: [addressId], references: [id])
+
+  rtoAddressId    Int
+  rtoAddress      Address @relation("RTOAddress", fields: [rtoAddressId], references: [id])
+
+  physicalWeight   Float
+  length           Float
+  breadth          Float
+  height           Float
+  volumetricWeight Float
+  applicableWeight Float
+  dangerousGoods   Boolean @default(false)
+
+  products        OrderProduct[]
+  paymentMethod   PaymentMethod
+  totalOrderValue Float
+  status          OrderStatus @default(PENDING)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, orderNo])
+}
+
+model OrderProduct {
+  id         Int    @id @default(autoincrement())
+  orderId    Int
+  productId  Int
+
+  order      Order   @relation(fields: [orderId], references: [id])
+  product    Product @relation(fields: [productId], references: [id])
+
+  quantity   Int
+  unitPrice  Float
+  totalPrice Float
+}
+
+enum PaymentMethod {
+  PREPAID
+  COD
+}
+
+enum OrderStatus {
+  NEW 
+  PENDING
+  CONFIRMED
+  PICKED
+  IN_TRANSIT
+  DELIVERED
+  RTO
+  CANCELLED
+}
