@@ -128,18 +128,16 @@ const page = () => {
         )}
       </div>
 
-      <div className="w-full h-15 bg-white mt-5 rounded-xl p-4 flex items-center justify-between ">
-        <div className="text-black w-full flex justify-between">
-          <h1>Order no.</h1>
-          <h1>Order Details</h1>
-          <h1>Customer Details</h1>
-          <h1>Payment</h1>
-          <h1>Package Details</h1>
-          <h1>Pickup Address</h1>
-          <h1>Rto Address</h1>
-          <h1>Status</h1>
-          <h1>Action</h1>
-        </div>
+      <div className="w-full bg-blue-600 text-white rounded-lg grid grid-cols-9 gap-4 p-4 items-center text-sm mt-4 font-medium">
+        <div className="col-span-1">Order ID</div>
+        <div className="col-span-1">Buyer</div>
+        <div className="col-span-1">Payment</div>
+        <div className="col-span-1">Dimensions</div>
+        <div className="col-span-1">Delivery</div>
+        <div className="col-span-1">RTO</div>
+        <div className="col-span-1">Status</div>
+        <div className="col-span-1">Date</div>
+        <div className="col-span-1">Action</div>
       </div>
       <div className="mt-4">
         {orders.length > 0 && (
