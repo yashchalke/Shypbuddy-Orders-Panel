@@ -99,7 +99,7 @@ const Pickupform = ({ onChange }: FormProps) => {
                 }}
                 className="p-2 hover:bg-[#2c3a4b] cursor-pointer text-sm border-b border-[#2c3a4b]"
               >
-                <p className="font-semibold">{addr.tagName}</p>
+                <p className="font-semibold">{addr.tag}</p>
                 <p className="text-xs text-gray-400">
                   {addr.tag}, {addr.address}, {addr.city}
                 </p>
@@ -159,7 +159,7 @@ const Pickupform = ({ onChange }: FormProps) => {
                     e.preventDefault(); // Critical for selection to work
                     
                     setSelectedRTO(addr);
-                    setRtoQuery(addr.tagName || "");
+                    setRtoQuery(addr.tag || "");
                     setShowRto(false);
                     
                     onChange({
@@ -169,8 +169,10 @@ const Pickupform = ({ onChange }: FormProps) => {
                   }}
                   className="p-2 hover:bg-[#2c3a4b] cursor-pointer text-sm border-b border-[#2c3a4b]"
                 >
-                  <b>{addr.tagName}</b>
-                  <p className="text-xs">{addr.address}</p>
+                  <b>{addr.tag}</b>
+                  <p className="text-xs text-gray-400">
+                  {addr.tag}, {addr.address}, {addr.city}
+                </p>
                 </div>
               ))}
             </div>
