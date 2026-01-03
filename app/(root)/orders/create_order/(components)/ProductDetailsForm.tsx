@@ -66,6 +66,7 @@ const ProductDetailsForm = ({ onChange }: FormProps) => {
       HSN: hsn,
       unitPrice: Number(price),
       quantity: Number(quantity),
+      total: Number(price) * Number(quantity)
     };
 
     setproducts((prev) => [...prev, payload]);

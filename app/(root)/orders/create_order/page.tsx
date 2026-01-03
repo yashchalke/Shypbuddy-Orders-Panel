@@ -6,8 +6,9 @@ import ProductDetailsForm from "./(components)/ProductDetailsForm";
 import PackageDetails from "./(components)/PackageDetails";
 import LastForm from "./(components)/LastForm";
 import toast from "react-hot-toast";
+import { z } from "zod";
 
-// Edited Part 
+// Edited Part
 
 type ShipmentSection = "pickup" | "buyer" | "product" | "package";
 
@@ -33,49 +34,87 @@ const page = () => {
     package: {},
   });
 
+  const buyersSchema = z.object({
+    buyersname: z.string().min(2, "Name must be at least 2 characters"),
+    buyersnumber: z.string().regex(/^\d{10}$/, "Number must be 10 digits"),
+    alternatenumber: z
+      .string()
+      .regex(/^\d{10}$/, "Alternate number must be 10 digits")
+      .optional()
+      .or(z.literal("")),
+    email: z.string().email("Invalid email address"),
+    orderno: z.string().min(3, "Order number too short"),
+    address: z.string().min(5, "Address is too short"),
+    pincode: z.string().regex(/^\d{6}$/, "Pincode must be 6 digits"),
+    landmark: z.string().min(2, "Landmark required"),
+    city: z.string().min(2, "City is required"),
+    state: z.string().min(2, "State is required"),
+    country: z.string().min(2, "Country is required"),
+  });
+
+  const packageSchema = z.object({
+    length: z.number().gt(0.5),
+    breadth: z.number().gt(0.5),
+    height: z.number().gt(0.5),
+    weight: z.number().positive(),
+  });
+
+  const productSchema = z.object({
+    name: z.string().min(2, "Product name is required"),
+    category: z.string().min(2, "Category is required"),
+    sku: z.string().min(2, "SKU is required"),
+    hsn: z.string().min(4, "HSN code is invalid"),
+    quantity: z.string().regex(/^\d+$/, "Quantity must be a number"),
+    price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter valid price"),
+  });
+
   const updateformdata = (section: ShipmentSection, data: any) => {
-  setshipmentdata((prev) => ({
-    ...prev,
-    [section]:
-      section === "product" ? data : { ...prev[section], ...data },
-  }));
-};
+    setshipmentdata((prev) => ({
+      ...prev,
+      [section]: section === "product" ? data : { ...prev[section], ...data },
+    }));
+  };
 
   const handleSave = async (e: React.FormEvent) => {
-      e.preventDefault();
+    e.preventDefault();
 
-      const payload = {
-        buyer: shipmentdata.buyer,
-        addressId: shipmentdata.pickup.addressId,
-        rtoAddressId: shipmentdata.pickup.rtoAddressId,
-        shipment: shipmentdata.package,
-        dangerousGoods,
-        paymentMethod,
-        products: shipmentdata.product,
-      };
-
-      console.log("FINAL PAYLOAD", payload);
-
-      try {
-        const res = await fetch("/api/orders/create-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.message || "Order failed");
-
-        toast.success("Order Created Successfully");
-      } catch (err: any) {
-        toast.error(err.message);
-      }
+    const payload = {
+      buyer: shipmentdata.buyer,
+      addressId: shipmentdata.pickup.addressId,
+      rtoAddressId: shipmentdata.pickup.rtoAddressId,
+      shipment: shipmentdata.package,
+      dangerousGoods,
+      paymentMethod,
+      products: shipmentdata.product,
     };
 
-    //
+    console.log("FINAL PAYLOAD", payload);
 
-    
+    try {
+      const res = await fetch("/api/orders/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Order failed");
+
+      toast.success("Order Created Successfully");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  console.log(shipmentdata)
+
+  const totalordervalue = shipmentdata.product.reduce(
+    (sum,item) => sum + item.total, 0 
+  )
+
+  //
+
   return (
     <div className="p-4 md:p-10 font-poppins text-white">
       <div className="border h-full rounded-lg bg-[#24303f] border-[#2c3a4b]">
@@ -161,13 +200,13 @@ const page = () => {
 
                 <div className="border w-full text-black p-3 bg-white rounded-lg mt-5 flex justify-between font-semibold">
                   <h1>Total Order Value</h1>
-                  <h1>₹ 0</h1>
+                  <h1>₹{totalordervalue.toFixed(2)}</h1>
                 </div>
                 <div className="flex gap-4 mt-4 justify-end">
-                  <button 
-                  type="submit"
-                  
-                  className="bg-green-500 px-4 py-2 rounded-lg hover:bg-green-600">
+                  <button
+                    type="submit"
+                    className="bg-green-500 px-4 py-2 rounded-lg hover:bg-green-600"
+                  >
                     save
                   </button>
                   <button className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600">

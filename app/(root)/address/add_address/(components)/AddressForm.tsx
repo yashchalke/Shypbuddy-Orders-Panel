@@ -82,7 +82,7 @@ const AddressForm = () => {
     setErrors({});
 
     try {
-      const res = await fetch("http://localhost:3001/api/address/add-address", {
+      const res = await fetch("/api/address/add-address", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(result.data),

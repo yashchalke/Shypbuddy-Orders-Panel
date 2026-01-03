@@ -13,19 +13,16 @@ export async function POST(req: NextRequest) {
 
     const result = await prisma.$transaction(async (tx) => {
 
-      // 🔐 Validate Pickup Address
       const pickup = await tx.address.findFirst({
         where: { id: body.addressId, userId: decoded.userId },
       });
       if (!pickup) throw new Error("Invalid pickup address");
 
-      // 🔐 Validate RTO Address
       const rto = await tx.address.findFirst({
         where: { id: body.rtoAddressId, userId: decoded.userId },
       });
       if (!rto) throw new Error("Invalid RTO address");
 
-      // 👤 Create Buyer
       const buyer = await tx.buyer.create({
         data: {
           userId: decoded.userId,
@@ -41,7 +38,6 @@ export async function POST(req: NextRequest) {
 
       const applicableWeight = Math.max(Number(body.shipment.physicalWeight), Number(volumetricWeight));
 
-      // 📦 Create Order
       const order = await tx.order.create({
         data: {
           userId: decoded.userId,
