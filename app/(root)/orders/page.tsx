@@ -6,8 +6,8 @@ import { Filter, Search } from "lucide-react";
 import ReactPaginate from "react-paginate";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const Page = () => { // Fix: Component name should be PascalCase
-  const [orders, setOrders] = useState<any[]>([]); // Fix: camelCase
+const Page = () => { 
+  const [orders, setOrders] = useState<any[]>([]); 
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("desc");
   const [showFilter, setShowFilter] = useState(false);
   const [orderid, setOrderId] = useState<string>("");
@@ -51,7 +51,6 @@ const Page = () => { // Fix: Component name should be PascalCase
     return () => clearTimeout(timer);
   }, [page, orderid]);
 
-  // ✅ Add this handler to remove deleted order from state
   const handleDeleteOrder = (orderId: number) => {
     setOrders((prevOrders) => prevOrders.filter((order) => order.id !== orderId));
   };
@@ -151,7 +150,7 @@ const Page = () => { // Fix: Component name should be PascalCase
               <OrderCard 
                 key={order.id} 
                 order={order} 
-                onDelete={handleDeleteOrder} // ✅ Pass the handler here
+                onDelete={handleDeleteOrder} 
               />
             ))}
           </div>

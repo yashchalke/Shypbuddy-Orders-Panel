@@ -20,12 +20,12 @@ type ShipmentData = {
   package: Record<string, any>;
 };
 
-type ValidationErrors = {
-  pickup: string[];
-  buyer: string[];
-  product: string[];
-  package: string[];
-};
+// type ValidationErrors = {
+//   pickup: string[];
+//   buyer: string[];
+//   product: string[];
+//   package: string[];
+// };
 
 const page = () => {
   const [dangerousGoods, setDangerousGoods] = useState<boolean>(false);
@@ -38,66 +38,66 @@ const page = () => {
     product: [],
     package: {},
   });
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
-    pickup: [],
-    buyer: [],
-    product: [],
-    package: [],
-  });
+  // const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
+  //   pickup: [],
+  //   buyer: [],
+  //   product: [],
+  //   package: [],
+  // });
 
-  const buyersSchema = z.object({
-    buyersname: z.string().min(2, "Buyer's name must be at least 2 characters"),
-    buyersnumber: z.string().regex(/^\d{10}$/, "Buyer's phone number must be 10 digits"),
-    alternatenumber: z
-      .string()
-      .regex(/^\d{10}$/, "Alternate number must be 10 digits")
-      .optional()
-      .or(z.literal("")),
-    email: z.string().email("Invalid buyer email address"),
-    orderno: z.string().min(3, "Order number is too short"),
-    address: z.string().min(5, "Buyer's address is too short"),
-    pincode: z.string().regex(/^\d{6}$/, "Buyer's pincode must be 6 digits"),
-    landmark: z.string().min(2, "Landmark is required"),
-    city: z.string().min(2, "City is required"),
-    state: z.string().min(2, "State is required"),
-    country: z.string().min(2, "Country is required"),
-  });
+  // const buyersSchema = z.object({
+  //   buyersname: z.string().min(2, "Buyer's name must be at least 2 characters"),
+  //   buyersnumber: z.string().regex(/^\d{10}$/, "Buyer's phone number must be 10 digits"),
+  //   alternatenumber: z
+  //     .string()
+  //     .regex(/^\d{10}$/, "Alternate number must be 10 digits")
+  //     .optional()
+  //     .or(z.literal("")),
+  //   email: z.string().email("Invalid buyer email address"),
+  //   orderno: z.string().min(3, "Order number is too short"),
+  //   address: z.string().min(5, "Buyer's address is too short"),
+  //   pincode: z.string().regex(/^\d{6}$/, "Buyer's pincode must be 6 digits"),
+  //   landmark: z.string().min(2, "Landmark is required"),
+  //   city: z.string().min(2, "City is required"),
+  //   state: z.string().min(2, "State is required"),
+  //   country: z.string().min(2, "Country is required"),
+  // });
 
-  const packageSchema = z.object({
-    length: z
-      .number()
-      .gt(0.5, "Length must be greater than 0.5 cm")
-      .refine((val) => val !== undefined && val !== null, {
-        message: "Package length is required",
-      }),
-    breadth: z
-      .number()
-      .gt(0.5, "Breadth must be greater than 0.5 cm")
-      .refine((val) => val !== undefined && val !== null, {
-        message: "Package breadth is required",
-      }),
-    height: z
-      .number()
-      .gt(0.5, "Height must be greater than 0.5 cm")
-      .refine((val) => val !== undefined && val !== null, {
-        message: "Package height is required",
-      }),
-    weight: z
-      .number()
-      .positive("Weight must be positive")
-      .refine((val) => val !== undefined && val !== null, {
-        message: "Package weight is required",
-      }),
-  });
+  // const packageSchema = z.object({
+  //   length: z
+  //     .number()
+  //     .gt(0.5, "Length must be greater than 0.5 cm")
+  //     .refine((val) => val !== undefined && val !== null, {
+  //       message: "Package length is required",
+  //     }),
+  //   breadth: z
+  //     .number()
+  //     .gt(0.5, "Breadth must be greater than 0.5 cm")
+  //     .refine((val) => val !== undefined && val !== null, {
+  //       message: "Package breadth is required",
+  //     }),
+  //   height: z
+  //     .number()
+  //     .gt(0.5, "Height must be greater than 0.5 cm")
+  //     .refine((val) => val !== undefined && val !== null, {
+  //       message: "Package height is required",
+  //     }),
+  //   weight: z
+  //     .number()
+  //     .positive("Weight must be positive")
+  //     .refine((val) => val !== undefined && val !== null, {
+  //       message: "Package weight is required",
+  //     }),
+  // });
 
-  const productSchema = z.object({
-    name: z.string().min(2, "Product name is required"),
-    category: z.string().min(2, "Product category is required"),
-    sku: z.string().min(2, "Product SKU is required"),
-    hsn: z.string().min(4, "HSN code is invalid"),
-    quantity: z.string().regex(/^\d+$/, "Quantity must be a number"),
-    price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter valid product price"),
-  });
+  // const productSchema = z.object({
+  //   name: z.string().min(2, "Product name is required"),
+  //   category: z.string().min(2, "Product category is required"),
+  //   sku: z.string().min(2, "Product SKU is required"),
+  //   hsn: z.string().min(4, "HSN code is invalid"),
+  //   quantity: z.string().regex(/^\d+$/, "Quantity must be a number"),
+  //   price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter valid product price"),
+  // });
 
   const updateformdata = (section: ShipmentSection, data: any) => {
     setshipmentdata((prev) => ({
@@ -105,116 +105,116 @@ const page = () => {
       [section]: section === "product" ? data : { ...prev[section], ...data },
     }));
     // Clear validation errors for this section when data is updated
-    setValidationErrors((prev) => ({
-      ...prev,
-      [section]: [],
-    }));
+    // setValidationErrors((prev) => ({
+    //   ...prev,
+    //   [section]: [],
+    // }));
   };
 
   // Get all missing fields and validation errors
-  const getMissingFields = (): { errors: ValidationErrors; allErrors: string[] } => {
-    const errors: ValidationErrors = {
-      pickup: [],
-      buyer: [],
-      product: [],
-      package: [],
-    };
-    const allErrors: string[] = [];
+  // const getMissingFields = (): { errors: ValidationErrors; allErrors: string[] } => {
+  //   const errors: ValidationErrors = {
+  //     pickup: [],
+  //     buyer: [],
+  //     product: [],
+  //     package: [],
+  //   };
+  //   const allErrors: string[] = [];
 
-    // Validate pickup addresses
-    if (!shipmentdata.pickup.addressId) {
-      errors.pickup.push("Pickup address is required");
-      allErrors.push("Pickup address is required");
-    }
-    if (!shipmentdata.pickup.rtoAddressId) {
-      errors.pickup.push("RTO address is required");
-      allErrors.push("RTO address is required");
-    }
+  //   // Validate pickup addresses
+  //   if (!shipmentdata.pickup.addressId) {
+  //     errors.pickup.push("Pickup address is required");
+  //     allErrors.push("Pickup address is required");
+  //   }
+  //   if (!shipmentdata.pickup.rtoAddressId) {
+  //     errors.pickup.push("RTO address is required");
+  //     allErrors.push("RTO address is required");
+  //   }
 
-    // Validate buyer details
-    if (Object.keys(shipmentdata.buyer).length === 0) {
-      errors.buyer.push("Buyer details are required");
-      allErrors.push("Buyer details are required");
-    } else {
-      try {
-        buyersSchema.parse(shipmentdata.buyer);
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          error.issues.forEach((err) => {
-            errors.buyer.push(err.message);
-            allErrors.push(err.message);
-          });
-        }
-      }
-    }
+  //   // Validate buyer details
+  //   if (Object.keys(shipmentdata.buyer).length === 0) {
+  //     errors.buyer.push("Buyer details are required");
+  //     allErrors.push("Buyer details are required");
+  //   } else {
+  //     try {
+  //       buyersSchema.parse(shipmentdata.buyer);
+  //     } catch (error) {
+  //       if (error instanceof z.ZodError) {
+  //         error.issues.forEach((err) => {
+  //           errors.buyer.push(err.message);
+  //           allErrors.push(err.message);
+  //         });
+  //       }
+  //     }
+  //   }
 
-    // Validate products
-    if (!shipmentdata.product || shipmentdata.product.length === 0) {
-      errors.product.push("At least one product is required");
-      allErrors.push("At least one product is required");
-    } else {
-      shipmentdata.product.forEach((product, index) => {
-        try {
-          productSchema.parse(product);
-        } catch (error) {
-          if (error instanceof z.ZodError) {
-            error.issues.forEach((err) => {
-              const errorMsg = `Product ${index + 1}: ${err.message}`;
-              errors.product.push(errorMsg);
-              allErrors.push(errorMsg);
-            });
-          }
-        }
-      });
-    }
+  //   // Validate products
+  //   if (!shipmentdata.product || shipmentdata.product.length === 0) {
+  //     errors.product.push("At least one product is required");
+  //     allErrors.push("At least one product is required");
+  //   } else {
+  //     shipmentdata.product.forEach((product, index) => {
+  //       try {
+  //         productSchema.parse(product);
+  //       } catch (error) {
+  //         if (error instanceof z.ZodError) {
+  //           error.issues.forEach((err) => {
+  //             const errorMsg = `Product ${index + 1}: ${err.message}`;
+  //             errors.product.push(errorMsg);
+  //             allErrors.push(errorMsg);
+  //           });
+  //         }
+  //       }
+  //     });
+  //   }
 
-    // Validate package details
-    if (Object.keys(shipmentdata.package).length === 0) {
-      errors.package.push("Package dimensions are required");
-      allErrors.push("Package dimensions are required");
-    } else {
-      try {
-        packageSchema.parse(shipmentdata.package);
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          error.issues.forEach((err) => {
-            errors.package.push(err.message);
-            allErrors.push(err.message);
-          });
-        }
-      }
-    }
+  //   // Validate package details
+  //   if (Object.keys(shipmentdata.package).length === 0) {
+  //     errors.package.push("Package dimensions are required");
+  //     allErrors.push("Package dimensions are required");
+  //   } else {
+  //     try {
+  //       packageSchema.parse(shipmentdata.package);
+  //     } catch (error) {
+  //       if (error instanceof z.ZodError) {
+  //         error.issues.forEach((err) => {
+  //           errors.package.push(err.message);
+  //           allErrors.push(err.message);
+  //         });
+  //       }
+  //     }
+  //   }
 
-    return { errors, allErrors };
-  };
+  //   return { errors, allErrors };
+  // };
 
-  // Show all errors as toasts
-  const showValidationErrors = (allErrors: string[]) => {
-    // Show first 3 errors to avoid toast spam
-    const errorsToShow = allErrors.slice(0, 3);
-    errorsToShow.forEach((error, index) => {
-      setTimeout(() => {
-        toast.error(error);
-      }, index * 300);
-    });
+  // // Show all errors as toasts
+  // const showValidationErrors = (allErrors: string[]) => {
+  //   // Show first 3 errors to avoid toast spam
+  //   const errorsToShow = allErrors.slice(0, 3);
+  //   errorsToShow.forEach((error, index) => {
+  //     setTimeout(() => {
+  //       toast.error(error);
+  //     }, index * 300);
+  //   });
 
-    if (allErrors.length > 3) {
-      setTimeout(() => {
-        toast.error(`And ${allErrors.length - 3} more errors...`);
-      }, 900);
-    }
-  };
+  //   if (allErrors.length > 3) {
+  //     setTimeout(() => {
+  //       toast.error(`And ${allErrors.length - 3} more errors...`);
+  //     }, 900);
+  //   }
+  // };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { errors, allErrors } = getMissingFields();
+    // const { errors, allErrors } = getMissingFields();
 
-    if (allErrors.length > 0) {
-      setValidationErrors(errors);
-      showValidationErrors(allErrors);
-      return;
-    }
+    // if (allErrors.length > 0) {
+    //   setValidationErrors(errors);
+    //   showValidationErrors(allErrors);
+    //   return;
+    // }
 
     const payload = {
       buyer: shipmentdata.buyer,
@@ -253,21 +253,21 @@ const page = () => {
   );
 
   // Helper component to show section errors
-  const SectionErrors = ({ errors }: { errors: string[] }) => {
-    if (errors.length === 0) return null;
-    return (
-      <div className="mt-2 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
-        <ul className="text-red-400 text-sm space-y-1">
-          {errors.map((error, index) => (
-            <li key={index} className="flex items-start gap-2">
-              <span className="text-red-500">•</span>
-              {error}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
+  // const SectionErrors = ({ errors }: { errors: string[] }) => {
+  //   if (errors.length === 0) return null;
+  //   return (
+  //     <div className="mt-2 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+  //       <ul className="text-red-400 text-sm space-y-1">
+  //         {errors.map((error, index) => (
+  //           <li key={index} className="flex items-start gap-2">
+  //             <span className="text-red-500">•</span>
+  //             {error}
+  //           </li>
+  //         ))}
+  //       </ul>
+  //     </div>
+  //   );
+  // };
 
   return (
     <div className="p-4 md:p-10 font-poppins text-white">
@@ -280,28 +280,28 @@ const page = () => {
             <Pickupform
               onChange={(data: any) => updateformdata("pickup", data)}
             />
-            <SectionErrors errors={validationErrors.pickup} />
+            {/* <SectionErrors errors={validationErrors.pickup} /> */}
           </div>
 
           <div>
             <BuyersDetailsForm
               onChange={(data: any) => updateformdata("buyer", data)}
             />
-            <SectionErrors errors={validationErrors.buyer} />
+            {/* <SectionErrors errors={validationErrors.buyer} /> */}
           </div>
 
           <div>
             <ProductDetailsForm
               onChange={(data: any) => updateformdata("product", data)}
             />
-            <SectionErrors errors={validationErrors.product} />
+            {/* <SectionErrors errors={validationErrors.product} /> */}
           </div>
 
           <div>
             <PackageDetails
               onChange={(data: any) => updateformdata("package", data)}
             />
-            <SectionErrors errors={validationErrors.package} />
+            {/* <SectionErrors errors={validationErrors.package} /> */}
           </div>
 
           <div className="mt-6">

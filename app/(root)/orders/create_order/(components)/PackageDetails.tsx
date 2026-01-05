@@ -78,8 +78,9 @@ const PackageDetails = ({ onChange }: FormProps) => {
                   Kg
                 </h1>
                 <input
-                  type="number"
+                  type="text"
                   placeholder="0.00"
+                  min={0}
                   value={weight}
                   onChange={(e) => {
                     setweight(e.target.value);
@@ -112,7 +113,7 @@ const PackageDetails = ({ onChange }: FormProps) => {
                 <div className="flex">
                   <h1 className="px-2 py-2 rounded bg-white text-black">CM</h1>
                   <input
-                    type="number"
+                    type="text"
                     placeholder="0.00"
                     value={length}
                     onChange={(e) => {
@@ -133,7 +134,7 @@ const PackageDetails = ({ onChange }: FormProps) => {
                 <div className="flex">
                   <h1 className=" px-2 py-2 rounded bg-white text-black">CM</h1>
                   <input
-                    type="number"
+                    type="text"
                     value={breadth}
                     placeholder="0.00"
                     onChange={(e) => {
@@ -154,7 +155,7 @@ const PackageDetails = ({ onChange }: FormProps) => {
                 <div className="flex">
                   <h1 className=" px-2 py-2 rounded bg-white text-black">CM</h1>
                   <input
-                    type="number"
+                    type="text"
                     placeholder="0.00"
                     value={height}
                     onChange={(e) => {

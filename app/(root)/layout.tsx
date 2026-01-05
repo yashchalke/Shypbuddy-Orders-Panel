@@ -3,6 +3,7 @@ import { Geist, Geist_Mono,Poppins} from "next/font/google";
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "react-hot-toast";
+import LayoutWrapper from "./orders/create_order/(components)/LayoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  
   return (
     <html lang="en">
       <body
@@ -37,7 +39,9 @@ export default function RootLayout({
       >
         <Toaster position="top-center" reverseOrder={false}/>
         <Navbar />
-        {children}
+         <LayoutWrapper>
+          {children}
+        </LayoutWrapper>
       </body>
     </html>
   );

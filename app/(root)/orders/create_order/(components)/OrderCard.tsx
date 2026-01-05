@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type Props = {
   order: any;
-  onDelete?: (orderId: number) => void; // ✅ Make sure this prop exists
+  onDelete?: (orderId: number) => void; 
 };
 
 const OrderCard = ({ order, onDelete }: Props) => {
@@ -28,7 +28,7 @@ const OrderCard = ({ order, onDelete }: Props) => {
       }
 
       toast.success("Order deleted successfully");
-      onDelete?.(order.id); // ✅ Call the callback to update parent state
+      onDelete?.(order.id); 
     } catch (error: any) {
       toast.error(error.message || "Failed to delete order");
     } finally {
