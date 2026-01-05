@@ -1,13 +1,15 @@
-"use client"
+"use client";
 import toast from "react-hot-toast";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Props = {
   order: any;
-  onDelete?: (orderId: number) => void; 
+  onDelete?: (orderId: number) => void;
 };
 
 const OrderCard = ({ order, onDelete }: Props) => {
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -28,7 +30,7 @@ const OrderCard = ({ order, onDelete }: Props) => {
       }
 
       toast.success("Order deleted successfully");
-      onDelete?.(order.id); 
+      onDelete?.(order.id);
     } catch (error: any) {
       toast.error(error.message || "Failed to delete order");
     } finally {
@@ -66,7 +68,9 @@ const OrderCard = ({ order, onDelete }: Props) => {
       {/* Delivery Address */}
       <div className="col-span-1">
         <span className="text-white">{order.address.city}</span>
-        <span className="text-gray-400 text-xs ml-1">({order.address.tag})</span>
+        <span className="text-gray-400 text-xs ml-1">
+          ({order.address.tag})
+        </span>
       </div>
 
       {/* RTO Address */}
@@ -128,6 +132,14 @@ const OrderCard = ({ order, onDelete }: Props) => {
           ) : (
             "X"
           )}
+        </button>
+        <button
+          onClick={() =>
+            router.push(`/orders/create_order?orderId=${order.id}`)
+          }
+          className="bg-white text-black px-2 py-1 rounded hover:bg-gray-200 transition-colors text-xs font-medium"
+        >
+          Edit
         </button>
       </div>
     </div>

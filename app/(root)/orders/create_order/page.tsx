@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import Pickupform from "./(components)/Pickupform";
 import BuyersDetailsForm from "./(components)/BuyersDetailsForm";
 import ProductDetailsForm from "./(components)/ProductDetailsForm";
@@ -7,13 +7,14 @@ import PackageDetails from "./(components)/PackageDetails";
 import LastForm from "./(components)/LastForm";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { useSearchParams } from "next/navigation";
 
 type ShipmentSection = "pickup" | "buyer" | "product" | "package";
 
 type ShipmentData = {
   pickup: {
-    addressId?: number;
-    rtoAddressId?: number;
+    addressId: number | null;
+    rtoAddressId: number | null;
   };
   buyer: Record<string, any>;
   product: any[];
@@ -33,11 +34,16 @@ const page = () => {
     "PREPAID"
   );
   const [shipmentdata, setshipmentdata] = useState<ShipmentData>({
-    pickup: {},
+    pickup: {
+      addressId: null,
+    rtoAddressId: null,
+    },
     buyer: {},
     product: [],
     package: {},
   });
+  const searchParams = useSearchParams();
+  const editOrderId = searchParams.get("orderId");
   // const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
   //   pickup: [],
   //   buyer: [],
@@ -104,12 +110,77 @@ const page = () => {
       ...prev,
       [section]: section === "product" ? data : { ...prev[section], ...data },
     }));
+
+  
+
+
+
     // Clear validation errors for this section when data is updated
     // setValidationErrors((prev) => ({
     //   ...prev,
     //   [section]: [],
     // }));
   };
+
+const fetchOrderById = async (orderId: string) => {
+  try {
+    const res = await fetch(`/api/orders/fetch-order?id=${orderId}`, {
+      cache: "no-store",
+    });
+
+    const json = await res.json();
+
+    const order =
+      json?.orders && Array.isArray(json.orders) ? json.orders[0] : null;
+
+    if (!order) {
+      console.error("Order not found in response", json);
+      return;
+    }
+
+    setshipmentdata({
+      pickup: {
+        addressId: order.addressId,
+        rtoAddressId: order.rtoAddressId,
+      },
+
+      buyer: {
+        name: order.buyer.name,
+        phone: order.buyer.phone,
+        alternateNumber: order.buyer.alternateNumber,
+        email: order.buyer.email,
+      },
+
+      package: {
+        physicalWeight: order.physicalWeight,
+        length: order.length,
+        breadth: order.breadth,
+        height: order.height,
+      },
+
+      product: order.products.map((p: any) => ({
+        name: p.product.name,
+        category: p.product.category,
+        SKU: p.product.SKU,
+        HSN: p.product.HSN,
+        unitPrice: p.unitPrice,
+        quantity: p.quantity,
+      })),
+    });
+  } catch (err) {
+    console.error("Failed to load order for edit:", err);
+  }
+};
+
+
+useEffect(() => {
+  if (editOrderId) {
+    fetchOrderById(editOrderId);
+  }
+}, [editOrderId]);
+
+console.log(shipmentdata)
+
 
   // Get all missing fields and validation errors
   // const getMissingFields = (): { errors: ValidationErrors; allErrors: string[] } => {
