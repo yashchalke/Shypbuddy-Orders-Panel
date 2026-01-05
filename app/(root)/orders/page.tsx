@@ -5,13 +5,21 @@ import OrderCard from "@/app/(root)/orders/create_order/(components)/OrderCard";
 import { Filter, Search } from "lucide-react";
 import ReactPaginate from "react-paginate";
 import { useRouter, useSearchParams } from "next/navigation";
+import DateRangePicker from "./create_order/(components)/DateRangePicker";
 
-const Page = () => { 
-  const [orders, setOrders] = useState<any[]>([]); 
+const Page = () => {
+  const [orders, setOrders] = useState<any[]>([]);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("desc");
   const [showFilter, setShowFilter] = useState(false);
   const [orderid, setOrderId] = useState<string>("");
   const [totalPages, setTotalPages] = useState(1);
+  const [dateRange, setDateRange] = useState<{
+    from: string | null;
+    to: string | null;
+  }>({
+    from: null,
+    to: null,
+  });
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,40 +27,36 @@ const Page = () => {
   const initialPage = Number(searchParams.get("page") || 1);
   const [page, setPage] = useState(initialPage);
 
-  const fetchOrders = async (orderid: string = "") => {
+  const fetchOrders = async (
+    orderid: string = "",
+    range = dateRange,
+    pageNumber = page
+  ) => {
     try {
-      const url =
-        orderid.trim() !== ""
-          ? `/api/orders/fetch-order?id=${Number(orderid)}&page=${page}`
-          : `/api/orders/fetch-order?page=${page}`;
+      const params = new URLSearchParams();
 
-      const res = await fetch(url, { cache: "no-store" });
+      if (orderid.trim()) params.set("id", orderid);
+      params.set("page", String(pageNumber));
+
+      if (range.from) params.set("from", range.from);
+      if (range.to) params.set("to", range.to);
+
+      const res = await fetch(`/api/orders/fetch-order?${params.toString()}`, {
+        cache: "no-store",
+      });
+
       const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Failed to fetch orders");
-
-      setOrders(Array.isArray(data.orders) ? data.orders : []);
+      setOrders(data.orders || []);
       setTotalPages(data.pagination.totalPages);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
     }
   };
 
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(page));
-
-    router.replace(`?${params.toString()}`, { scroll: false });
-
-    const timer = setTimeout(() => {
-      fetchOrders(orderid);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [page, orderid]);
-
   const handleDeleteOrder = (orderId: number) => {
-    setOrders((prevOrders) => prevOrders.filter((order) => order.id !== orderId));
+    setOrders((prevOrders) =>
+      prevOrders.filter((order) => order.id !== orderId)
+    );
   };
 
   const sortedOrders = React.useMemo(() => {
@@ -65,6 +69,18 @@ const Page = () => {
       return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
     });
   }, [orders, sortOrder]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    params.set("page", String(page));
+    if (dateRange.from) params.set("from", dateRange.from);
+    if (dateRange.to) params.set("to", dateRange.to);
+    if (orderid) params.set("id", orderid);
+
+    router.replace(`?${params.toString()}`, { scroll: false });
+    fetchOrders(orderid, dateRange, page);
+  }, [page, orderid, dateRange.from, dateRange.to]);
 
   return (
     <div className="font-poppins text-white p-4">
@@ -93,10 +109,18 @@ const Page = () => {
         </div>
       </div>
 
-      <div className="mt-4 w-full flex justify-end relative">
+      <div className="mt-4 w-full flex justify-end relative gap-x-4">
+        <DateRangePicker
+          onApply={(range) => {
+            setPage(1);
+            setDateRange(range);
+            fetchOrders(orderid, range, 1); // 🔥 immediate fetch
+          }}
+        />
+
         <button
           onClick={() => setShowFilter((p) => !p)}
-          className="bg-white text-black px-4 py-2 rounded-lg flex items-center gap-x-2"
+          className="bg-white text-black px-4 py-2 rounded-lg flex items-center gap-x-2 h-15"
         >
           <Filter size={15} />
           <span>Filter</span>
@@ -125,6 +149,9 @@ const Page = () => {
               />
               <span>Date Descending</span>
             </label>
+            <div className="p-3 border-t border-[#38495e]">
+              <p className="text-xs text-gray-400 mb-2">Filter by date</p>
+            </div>
           </div>
         )}
       </div>
@@ -147,10 +174,10 @@ const Page = () => {
         {orders.length > 0 ? (
           <div className="flex flex-col gap-y-4">
             {sortedOrders.map((order) => (
-              <OrderCard 
-                key={order.id} 
-                order={order} 
-                onDelete={handleDeleteOrder} 
+              <OrderCard
+                key={order.id}
+                order={order}
+                onDelete={handleDeleteOrder}
               />
             ))}
           </div>

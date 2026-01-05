@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { useSearchParams } from "next/navigation";
 
+
 type ShipmentSection = "pickup" | "buyer" | "product" | "package";
 
 type ShipmentData = {

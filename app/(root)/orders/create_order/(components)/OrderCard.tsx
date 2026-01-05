@@ -2,6 +2,7 @@
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import DeleteOrderDialog from "./DeleteOrderDialog";
 
 type Props = {
   order: any;
@@ -13,11 +14,11 @@ const OrderCard = ({ order, onDelete }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete order #${order.id}?`)) {
-      return;
-    }
+    // if (!confirm(`Are you sure you want to delete order #${order.id}?`)) {
+    //   return;
+    // }
 
-    setIsDeleting(true);
+    // setIsDeleting(true);
     try {
       const response = await fetch(`/api/orders/delete-order?id=${order.id}`, {
         method: "DELETE",
@@ -107,32 +108,12 @@ const OrderCard = ({ order, onDelete }: Props) => {
         <button className="px-3 py-2 bg-purple-500 hover:bg-purple-600 transition-colors rounded-lg text-white text-xs font-medium">
           Ship
         </button>
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="bg-red-400 px-3 py-2 rounded-lg cursor-pointer hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white text-xs font-medium"
-        >
-          {isDeleting ? (
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-          ) : (
-            "X"
-          )}
-        </button>
+        <DeleteOrderDialog
+          onConfirm={async () => {
+            setIsDeleting(true);
+            await handleDelete();
+          }}
+        />
         <button
           onClick={() =>
             router.push(`/orders/create_order?orderId=${order.id}`)
