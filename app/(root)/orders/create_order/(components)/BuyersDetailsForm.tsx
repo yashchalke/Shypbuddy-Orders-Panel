@@ -1,13 +1,14 @@
 "use client";
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 
 type FormProps = {
+  value: any;
   onChange: (data: Record<string, any>) => void;
 };
 
-const BuyersDetailsForm = ({ onChange }: FormProps) => {
-   const states = [
+const BuyersDetailsForm = ({ value, onChange }: FormProps) => {
+  const states = [
     "Andhra Pradesh",
     "Arunachal Pradesh",
     "Assam",
@@ -37,7 +38,7 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
     "Uttarakhand",
     "West Bengal",
   ];
-  
+
   const buyersSchema = z.object({
     buyersname: z.string().min(2, "Name must be at least 2 characters"),
     buyersnumber: z.string().regex(/^\d{10}$/, "Number must be 10 digits"),
@@ -71,9 +72,30 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
   const [Catopen, setCatOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const CatdropdownRef = useRef<HTMLDivElement>(null);
+  const isSyncing = useRef(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    if (!value) return;
+
+    isSyncing.current = true;
+
+    setbuyersname(value.name || "");
+    setbuyersnumber(value.phone || "");
+    setalternatenumber(value.alternateNumber || "");
+    setemail(value.email || "");
+    setorderno(value.orderno || "");
+    setaddress(value.address || "");
+    setpincode(value.pincode || "");
+    setlandmark(value.landmark || "");
+    setcity(value.city || "");
+    setstate(value.state || "");
+
+    setTimeout(() => {
+      isSyncing.current = false;
+    }, 0);
+  }, [value]);
   const formData = {
     name: buyersname,
     phone: buyersnumber,
@@ -88,6 +110,7 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
   };
 
   useEffect(() => {
+    if (isSyncing.current) return;
     onChange(formData);
   }, [
     buyersname,
@@ -146,21 +169,24 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
   };
 
   useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-          setOpen(false);
-        }
-      };
-  
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-  
-    const handleSelectState = (selectedState: string) => {
-      setstate(selectedState);
-      validateField("state", selectedState);
-      setOpen(false);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
     };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectState = (selectedState: string) => {
+    setstate(selectedState);
+    validateField("state", selectedState);
+    setOpen(false);
+  };
 
   return (
     <div className="mt-6">
@@ -363,69 +389,71 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
             </div> */}
 
             <div className="flex-1 flex-col gap-2 " ref={dropdownRef}>
-        <label className="text-sm">
-          State<span className="text-red-500 ml-1">*</span>
-        </label>
+              <label className="text-sm">
+                State<span className="text-red-500 ml-1">*</span>
+              </label>
 
-        {/* Dropdown Button */}
-        <div className="relative mt-2">
-          <button
-            type="button"
-            onClick={() => setOpen(!open)}
-            className="bg-[#1a222c] px-2 py-1 rounded-lg placeholder:text-sm w-full border-[#3b4f68] border flex items-center justify-between text-left"
-          >
-            <span className={state ? "text-white" : "text-gray-400"}>
-              {state || "Select State"}
-            </span>
-            <svg
-              className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="m19 9-7 7-7-7"
-              />
-            </svg>
-          </button>
+              {/* Dropdown Button */}
+              <div className="relative mt-2">
+                <button
+                  type="button"
+                  onClick={() => setOpen(!open)}
+                  className="bg-[#1a222c] px-2 py-1 rounded-lg placeholder:text-sm w-full border-[#3b4f68] border flex items-center justify-between text-left"
+                >
+                  <span className={state ? "text-white" : "text-gray-400"}>
+                    {state || "Select State"}
+                  </span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${
+                      open ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="m19 9-7 7-7-7"
+                    />
+                  </svg>
+                </button>
 
-          {/* Dropdown Menu */}
-          {open && (
-            <div className="absolute top-full left-0 mt-1 z-10 bg-[#1a222c] border border-[#3b4f68] rounded-lg shadow-lg w-full max-h-60 overflow-y-auto">
-              <ul className="p-2 text-sm">
-                {states.map((item) => (
-                  <li key={item}>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectState(item)}
-                      className={`inline-flex items-center w-full p-2 hover:bg-[#2a3a4c] rounded text-left ${
-                        state === item ? "bg-[#2a3a4c] text-blue-400" : ""
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                {/* Dropdown Menu */}
+                {open && (
+                  <div className="absolute top-full left-0 mt-1 z-10 bg-[#1a222c] border border-[#3b4f68] rounded-lg shadow-lg w-full max-h-60 overflow-y-auto">
+                    <ul className="p-2 text-sm">
+                      {states.map((item) => (
+                        <li key={item}>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectState(item)}
+                            className={`inline-flex items-center w-full p-2 hover:bg-[#2a3a4c] rounded text-left ${
+                              state === item ? "bg-[#2a3a4c] text-blue-400" : ""
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Error Message */}
+              {errors.state && (
+                <p className="text-red-400 text-xs mt-1">{errors.state}</p>
+              )}
+
+              {/* Display selected value (for testing) */}
+              {state && (
+                <p className="text-green-400 text-xs mt-2">Selected: {state}</p>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Error Message */}
-        {errors.state && (
-          <p className="text-red-400 text-xs mt-1">{errors.state}</p>
-        )}
-
-        {/* Display selected value (for testing) */}
-        {state && (
-          <p className="text-green-400 text-xs mt-2">Selected: {state}</p>
-        )}
-      </div>
 
             {/* <div className="flex-1 flex-col gap-2">
               <label className="text-sm">

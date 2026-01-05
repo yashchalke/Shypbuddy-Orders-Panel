@@ -1,16 +1,22 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useRef } from "react";
 import { useRouter } from "next/navigation";
 
 type FormProps = {
+  value: {
+    addressId: number | null;
+    rtoAddressId: number | null;
+  };
   onChange: (data: {
     addressId: number | null;
     rtoAddressId: number | null;
   }) => void;
 };
 
-const Pickupform = ({ onChange }: FormProps) => {
+const Pickupform = ({ value,onChange }: FormProps) => {
   const router = useRouter();
+  const isEditMode = value.addressId !== null && value.rtoAddressId !== null;
+
 
   const [rtochecked, setrtochecked] = useState(true);
 
@@ -29,6 +35,9 @@ const Pickupform = ({ onChange }: FormProps) => {
   // Visibility Controls
   const [showPickup, setShowPickup] = useState(false);
   const [showRto, setShowRto] = useState(false);
+
+  //for update syncing
+  const isSyncing = useRef(false);
 
   // Fetch logic
   const fetchAddresses = async (searchTerm: string, type: "pickup" | "rto") => {
@@ -55,6 +64,34 @@ const Pickupform = ({ onChange }: FormProps) => {
     const t = setTimeout(() => fetchAddresses(rtoQuery, "rto"), 400);
     return () => clearTimeout(t);
   }, [rtoQuery, showRto, rtochecked]);
+
+useEffect(() => {
+  if (!isEditMode) return; 
+
+  isSyncing.current = true;
+
+  const load = async () => {
+    if (value.addressId) {
+      const p = await fetch(`/api/address/search?id=${value.addressId}`).then(r => r.json());
+      setSelectedPickup(p);
+      setQuery(p.tag || "");
+    }
+
+    if (value.rtoAddressId) {
+      const r = await fetch(`/api/address/search?id=${value.rtoAddressId}`).then(r => r.json());
+      setSelectedRTO(r);
+      setRtoQuery(r.tag || "");
+    }
+
+    setrtochecked(value.addressId === value.rtoAddressId);
+
+    isSyncing.current = false;
+  };
+
+  load();
+}, [value.addressId, value.rtoAddressId]);
+
+
 
   return (
     <div>
@@ -92,6 +129,7 @@ const Pickupform = ({ onChange }: FormProps) => {
                   setShowPickup(false); // Close dropdown
                   
                   // Trigger parent update
+                  if (!isSyncing.current)
                   onChange({
                     addressId: addr.id,
                     rtoAddressId: rtochecked ? addr.id : selectedRTO?.id || null,
@@ -115,13 +153,14 @@ const Pickupform = ({ onChange }: FormProps) => {
           type="checkbox"
           checked={rtochecked}
           onChange={() => {
-            const newVal = !rtochecked;
-            setrtochecked(newVal);
-            // Update parent immediately when checkbox toggles
-            onChange({
-              addressId: selectedPickup?.id || null,
-              rtoAddressId: newVal ? selectedPickup?.id || null : selectedRTO?.id || null,
-            });
+            const v = !rtochecked;
+            setrtochecked(v);
+
+            if (!isSyncing.current)
+              onChange({
+                addressId: selectedPickup?.id || null,
+                rtoAddressId: v ? selectedPickup?.id || null : selectedRTO?.id || null,
+              });
           }}
         />
         <p>RTO same as Pickup</p>
@@ -162,6 +201,7 @@ const Pickupform = ({ onChange }: FormProps) => {
                     setRtoQuery(addr.tag || "");
                     setShowRto(false);
                     
+                    if (!isSyncing.current)
                     onChange({
                       addressId: selectedPickup?.id || null,
                       rtoAddressId: addr.id,

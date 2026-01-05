@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 
 type FormProps = {
+  value: any[];
   onChange: (data: Record<string, any>) => void;
 };
 
@@ -17,7 +18,7 @@ const productSchema = z.object({
   price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter valid price"),
 });
 
-const ProductDetailsForm = ({ onChange }: FormProps) => {
+const ProductDetailsForm = ({ value,onChange }: FormProps) => {
   const categories = [
       "Others",
       "Clothes",
@@ -44,6 +45,7 @@ const ProductDetailsForm = ({ onChange }: FormProps) => {
     ];
   
   const [products, setproducts] = useState<any[]>([]);
+  const isSyncing = useRef(false);
 
   const [name, setname] = useState("");
   const [sku, setsku] = useState("");
@@ -57,9 +59,31 @@ const ProductDetailsForm = ({ onChange }: FormProps) => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const handleRemove = (index: number) => {
+  setproducts((prev) => prev.filter((_, i) => i !== index));
+};
+
   useEffect(() => {
-    onChange(products);
-  }, [products]);
+  if (!products.length && !value?.length) return;
+
+  const same =
+    JSON.stringify(products) === JSON.stringify(value);
+
+  if (same) return;      // ⛔ prevents loop
+
+  onChange(products);
+}, [products]);
+
+  useEffect(() => {
+  if (!Array.isArray(value)) return;
+
+  const same =
+    JSON.stringify(value) === JSON.stringify(products);
+
+  if (same) return;      // ⛔ prevents loop
+
+  setproducts(value);
+}, [value]);
 
   const validateField = (key: string, value: string) => {
     const partial = productSchema.pick({ [key]: true } as any);
@@ -335,37 +359,46 @@ const ProductDetailsForm = ({ onChange }: FormProps) => {
       </form>
 
       {products.length !== 0 && (
-        <div className="mt-4 grid md:grid-cols-3 lg:grid-cols-4 flex-wrap gap-4">
-          {products.map((item) => (
-            <div key={item.name} className="flex-1 min-w-60">
-              <div className="rounded-xl p-2 bg-[#344e6e]">
-                <div className="p-2 flex justify-between border-b">
-                  <h1>{item.name}</h1>
-                  <Delete />
-                </div>
-                <div className="mt-2 p-2 flex flex-col gap-2 border-b">
-                  <div className="flex justify-between">
-                    <h1>Category</h1>
-                    <h1>{item.category}</h1>
-                  </div>
-                  <div className="flex justify-between">
-                    <h1>Quantity</h1>
-                    <h1>{item.quantity}</h1>
-                  </div>
-                  <div className="flex justify-between">
-                    <h1>Price</h1>
-                    <h1>{item.unitPrice}</h1>
-                  </div>
-                </div>
-                <div className="p-2 flex justify-between">
-                  <h1>Total</h1>
-                  <h1>{item.unitPrice * item.quantity}</h1>
-                </div>
-              </div>
+  <div className="mt-4 grid md:grid-cols-3 lg:grid-cols-4 gap-4">
+    {products.map((item, index) => (
+      <div key={index} className="flex-1 min-w-60">
+        <div className="rounded-xl p-2 bg-[#344e6e]">
+          <div className="p-2 flex justify-between border-b">
+            <h1>{item.name}</h1>
+            <button
+              type="button"
+              onClick={() => handleRemove(index)}
+              className="text-red-400 hover:text-red-500"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="mt-2 p-2 flex flex-col gap-2 border-b">
+            <div className="flex justify-between">
+              <h1>Category</h1>
+              <h1>{item.category}</h1>
             </div>
-          ))}
+            <div className="flex justify-between">
+              <h1>Quantity</h1>
+              <h1>{item.quantity}</h1>
+            </div>
+            <div className="flex justify-between">
+              <h1>Price</h1>
+              <h1>{item.unitPrice}</h1>
+            </div>
+          </div>
+
+          <div className="p-2 flex justify-between">
+            <h1>Total</h1>
+            <h1>{item.unitPrice * item.quantity}</h1>
+          </div>
         </div>
-      )}
+      </div>
+    ))}
+  </div>
+)}
+
 
       <div className="border-b mt-10 border-[#38495e]"></div>
     </div>

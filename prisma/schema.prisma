@@ -49,6 +49,13 @@ model Buyer {
   alternateNumber String?
   email           String?
 
+  address   String?
+  pincode   String?
+  landmark  String?
+  city      String?
+  state     String?
+  orderno   String?
+
   orders          Order[]
 
   // @@unique([userId, phone]) //Remove

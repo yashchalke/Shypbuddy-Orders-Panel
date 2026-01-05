@@ -8,11 +8,12 @@ export async function POST(req: NextRequest) {
     if (!token)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: number;
+    };
     const body = await req.json();
 
     const result = await prisma.$transaction(async (tx) => {
-
       const pickup = await tx.address.findFirst({
         where: { id: body.addressId, userId: decoded.userId },
       });
@@ -30,13 +31,23 @@ export async function POST(req: NextRequest) {
           phone: body.buyer.phone,
           alternateNumber: body.buyer.alternateNumber,
           email: body.buyer.email,
+          address: body.buyer.address,
+          pincode: body.buyer.pincode,
+          landmark: body.buyer.landmark || "",
+          city: body.buyer.city,
+          state: body.buyer.state,
+          orderno: body.buyer.orderno || "",
         },
       });
 
       const volumetricWeight =
-        (body.shipment.length * body.shipment.breadth * body.shipment.height) / 5000;
+        (body.shipment.length * body.shipment.breadth * body.shipment.height) /
+        5000;
 
-      const applicableWeight = Math.max(Number(body.shipment.physicalWeight), Number(volumetricWeight));
+      const applicableWeight = Math.max(
+        Number(body.shipment.physicalWeight),
+        Number(volumetricWeight)
+      );
 
       const order = await tx.order.create({
         data: {
@@ -105,11 +116,14 @@ export async function POST(req: NextRequest) {
       orderId: result.order.id,
       data: result,
     });
-
   } catch (err: any) {
     console.error("Create order error:", err.message);
     return NextResponse.json(
-      { status: 500, success: false, message: err.message || "Internal Server Error" },
+      {
+        status: 500,
+        success: false,
+        message: err.message || "Internal Server Error",
+      },
       { status: 500 }
     );
   }

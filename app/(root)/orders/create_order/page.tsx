@@ -1,5 +1,5 @@
 "use client";
-import React, { useState , useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import Pickupform from "./(components)/Pickupform";
 import BuyersDetailsForm from "./(components)/BuyersDetailsForm";
 import ProductDetailsForm from "./(components)/ProductDetailsForm";
@@ -29,6 +29,7 @@ type ShipmentData = {
 // };
 
 const page = () => {
+  
   const [dangerousGoods, setDangerousGoods] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<"PREPAID" | "COD">(
     "PREPAID"
@@ -36,7 +37,7 @@ const page = () => {
   const [shipmentdata, setshipmentdata] = useState<ShipmentData>({
     pickup: {
       addressId: null,
-    rtoAddressId: null,
+      rtoAddressId: null,
     },
     buyer: {},
     product: [],
@@ -44,6 +45,7 @@ const page = () => {
   });
   const searchParams = useSearchParams();
   const editOrderId = searchParams.get("orderId");
+  const isEditMode = Boolean(editOrderId);
   // const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
   //   pickup: [],
   //   buyer: [],
@@ -111,10 +113,6 @@ const page = () => {
       [section]: section === "product" ? data : { ...prev[section], ...data },
     }));
 
-  
-
-
-
     // Clear validation errors for this section when data is updated
     // setValidationErrors((prev) => ({
     //   ...prev,
@@ -122,65 +120,69 @@ const page = () => {
     // }));
   };
 
-const fetchOrderById = async (orderId: string) => {
-  try {
-    const res = await fetch(`/api/orders/fetch-order?id=${orderId}`, {
-      cache: "no-store",
-    });
+  const fetchOrderById = async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/orders/fetch-order?id=${orderId}`, {
+        cache: "no-store",
+      });
 
-    const json = await res.json();
+      const json = await res.json();
 
-    const order =
-      json?.orders && Array.isArray(json.orders) ? json.orders[0] : null;
+      const order =
+        json?.orders && Array.isArray(json.orders) ? json.orders[0] : null;
 
-    if (!order) {
-      console.error("Order not found in response", json);
-      return;
+      if (!order) {
+        console.error("Order not found in response", json);
+        return;
+      }
+
+      setshipmentdata({
+        pickup: {
+          addressId: order.addressId,
+          rtoAddressId: order.rtoAddressId,
+        },
+
+        buyer: {
+          name: order.buyer.name,
+          phone: order.buyer.phone,
+          alternateNumber: order.buyer.alternateNumber || "",
+          email: order.buyer.email,
+          // orderno: order.orderNo || "",
+          address: order.address.address,
+          pincode: order.address.pincode,
+          landmark: order.address.landmark,
+          city: order.address.city,
+          state: order.address.state,
+        },
+
+        package: {
+          physicalWeight: order.physicalWeight,
+          length: order.length,
+          breadth: order.breadth,
+          height: order.height,
+        },
+
+        product: order.products.map((p: any) => ({
+          name: p.product.name,
+          category: p.product.category,
+          SKU: p.product.SKU,
+          HSN: p.product.HSN,
+          unitPrice: p.unitPrice,
+          quantity: p.quantity,
+        })),
+      });
+    } catch (err) {
+      console.error("Failed to load order for edit:", err);
     }
+  };
 
-    setshipmentdata({
-      pickup: {
-        addressId: order.addressId,
-        rtoAddressId: order.rtoAddressId,
-      },
+  useEffect(() => {
+    if (editOrderId) {
+      fetchOrderById(editOrderId);
+    }
+  }, [editOrderId]);
 
-      buyer: {
-        name: order.buyer.name,
-        phone: order.buyer.phone,
-        alternateNumber: order.buyer.alternateNumber,
-        email: order.buyer.email,
-      },
-
-      package: {
-        physicalWeight: order.physicalWeight,
-        length: order.length,
-        breadth: order.breadth,
-        height: order.height,
-      },
-
-      product: order.products.map((p: any) => ({
-        name: p.product.name,
-        category: p.product.category,
-        SKU: p.product.SKU,
-        HSN: p.product.HSN,
-        unitPrice: p.unitPrice,
-        quantity: p.quantity,
-      })),
-    });
-  } catch (err) {
-    console.error("Failed to load order for edit:", err);
-  }
-};
-
-
-useEffect(() => {
-  if (editOrderId) {
-    fetchOrderById(editOrderId);
-  }
-}, [editOrderId]);
-
-console.log(shipmentdata)
-
+  console.log(shipmentdata);
 
   // Get all missing fields and validation errors
   // const getMissingFields = (): { errors: ValidationErrors; allErrors: string[] } => {
@@ -279,14 +281,6 @@ console.log(shipmentdata)
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // const { errors, allErrors } = getMissingFields();
-
-    // if (allErrors.length > 0) {
-    //   setValidationErrors(errors);
-    //   showValidationErrors(allErrors);
-    //   return;
-    // }
-
     const payload = {
       buyer: shipmentdata.buyer,
       addressId: shipmentdata.pickup.addressId,
@@ -297,20 +291,24 @@ console.log(shipmentdata)
       products: shipmentdata.product,
     };
 
-    console.log("FINAL PAYLOAD", payload);
-
     try {
-      const res = await fetch("/api/orders/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        isEditMode
+          ? `/api/orders/update-order?id=${editOrderId}`
+          : "/api/orders/create-order",
+        {
+          method: isEditMode ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || "Order failed");
 
-      toast.success("Order Created Successfully");
+      toast.success(
+        isEditMode ? "Order Updated Successfully" : "Order Created Successfully"
+      );
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -319,9 +317,10 @@ console.log(shipmentdata)
   console.log(shipmentdata);
 
   const totalordervalue = shipmentdata.product.reduce(
-    (sum, item) => sum + (item.total || 0),
-    0
-  );
+  (sum, item) => sum + item.unitPrice * item.quantity,
+  0
+);
+
 
   // Helper component to show section errors
   // const SectionErrors = ({ errors }: { errors: string[] }) => {
@@ -344,11 +343,14 @@ console.log(shipmentdata)
     <div className="p-4 md:p-10 font-poppins text-white">
       <div className="border h-full rounded-lg bg-[#24303f] border-[#2c3a4b]">
         <div className="h-18 border-b flex items-center px-6 border-[#38495e] ">
-          <h1 className="text-xl font-semibold">Quick Shipment</h1>
+          <h1 className="text-xl font-semibold">
+            {isEditMode ? "Edit Order" : "Quick Shipment"}
+          </h1>
         </div>
         <div className="p-6">
           <div>
             <Pickupform
+              value={shipmentdata.pickup}
               onChange={(data: any) => updateformdata("pickup", data)}
             />
             {/* <SectionErrors errors={validationErrors.pickup} /> */}
@@ -356,6 +358,7 @@ console.log(shipmentdata)
 
           <div>
             <BuyersDetailsForm
+              value={shipmentdata.buyer}
               onChange={(data: any) => updateformdata("buyer", data)}
             />
             {/* <SectionErrors errors={validationErrors.buyer} /> */}
@@ -363,6 +366,7 @@ console.log(shipmentdata)
 
           <div>
             <ProductDetailsForm
+              value={shipmentdata.product}
               onChange={(data: any) => updateformdata("product", data)}
             />
             {/* <SectionErrors errors={validationErrors.product} /> */}
@@ -370,6 +374,7 @@ console.log(shipmentdata)
 
           <div>
             <PackageDetails
+              value={shipmentdata.package}
               onChange={(data: any) => updateformdata("package", data)}
             />
             {/* <SectionErrors errors={validationErrors.package} /> */}
@@ -446,9 +451,9 @@ console.log(shipmentdata)
                 <div className="flex gap-4 mt-4 justify-end">
                   <button
                     type="submit"
-                    className="bg-green-500 hover:bg-green-600 cursor-pointer px-4 py-2 rounded-lg font-semibold transition-colors"
+                    className="bg-green-500 px-4 py-2 rounded-lg"
                   >
-                    Save
+                    {isEditMode ? "Update Order" : "Save Order"}
                   </button>
                   <button
                     type="button"

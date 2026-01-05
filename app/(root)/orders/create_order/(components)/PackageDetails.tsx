@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 
 const numField = z
@@ -16,15 +16,22 @@ const packageSchema = z.object({
 });
 
 type FormProps = {
+  value: {
+    physicalWeight?: number;
+    length?: number;
+    breadth?: number;
+    height?: number;
+  };
   onChange: (data: Record<string, any>) => void;
 };
 
-const PackageDetails = ({ onChange }: FormProps) => {
+const PackageDetails = ({ value, onChange }: FormProps) => {
   const [length, setLength] = useState("");
   const [breadth, setBreadth] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setweight] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const isSyncing = useRef(false);
 
   const validateField = (key: string, value: string) => {
     const partial = packageSchema.pick({ [key]: true } as any);
@@ -55,8 +62,69 @@ const PackageDetails = ({ onChange }: FormProps) => {
     applicableWeight,
   };
 
+  const emitChange = (newState?: Partial<typeof Packageform>) => {
+    const payload = {
+      physicalWeight: Number(newState?.physicalWeight ?? weight),
+      length: Number(newState?.length ?? length),
+      breadth: Number(newState?.breadth ?? breadth),
+      height: Number(newState?.height ?? height),
+      volumetricWeight,
+      applicableWeight,
+    };
+
+    onChange(payload);
+  };
+
+  // useEffect(() => {
+  //   if (!value) return;
+
+  //   const incoming = {
+  //     physicalWeight: String(value.physicalWeight || ""),
+  //     length: String(value.length || ""),
+  //     breadth: String(value.breadth || ""),
+  //     height: String(value.height || ""),
+  //   };
+
+  //   const current = {
+  //     physicalWeight: weight,
+  //     length,
+  //     breadth,
+  //     height,
+  //   };
+
+  //   if (JSON.stringify(incoming) === JSON.stringify(current)) return;
+
+  //   setweight(incoming.physicalWeight);
+  //   setLength(incoming.length);
+  //   setBreadth(incoming.breadth);
+  //   setHeight(incoming.height);
+  // }, [value]);
+
   useEffect(() => {
-    onChange(Packageform);
+  if (!value) return;
+
+  setweight(String(value.physicalWeight || ""));
+  setLength(String(value.length || ""));
+  setBreadth(String(value.breadth || ""));
+  setHeight(String(value.height || ""));
+}, [value]);
+
+
+  useEffect(() => {
+    if (isSyncing.current) return;
+
+    if (!length || !breadth || !height || !weight) return;
+
+    const payload = {
+      physicalWeight: Number(weight),
+      length: Number(length),
+      breadth: Number(breadth),
+      height: Number(height),
+      volumetricWeight,
+      applicableWeight,
+    };
+
+    onChange(payload);
   }, [length, breadth, height, weight, volumetricWeight, applicableWeight]);
 
   return (
@@ -85,6 +153,7 @@ const PackageDetails = ({ onChange }: FormProps) => {
                   onChange={(e) => {
                     setweight(e.target.value);
                     validateField("weight", e.target.value);
+                    emitChange({ physicalWeight: Number(e.target.value) });
                   }}
                   className="bg-[#1a222c] px-2 py-2 rounded-lg placeholder:text-sm w-full min-w-60 border-[#3b4f68] border"
                 />
@@ -119,6 +188,7 @@ const PackageDetails = ({ onChange }: FormProps) => {
                     onChange={(e) => {
                       setLength(e.target.value);
                       validateField("length", e.target.value);
+                      emitChange({ length: Number(e.target.value) });
                     }}
                     className="bg-[#1a222c] px-2 py-2 rounded-lg placeholder:text-sm w-full min-w-60 border-[#3b4f68] border"
                   />
@@ -140,6 +210,7 @@ const PackageDetails = ({ onChange }: FormProps) => {
                     onChange={(e) => {
                       setBreadth(e.target.value);
                       validateField("breadth", e.target.value);
+                      emitChange({ breadth: Number(e.target.value) });
                     }}
                     className="bg-[#1a222c] px-2 py-2 rounded-lg placeholder:text-sm w-full min-w-60 border-[#3b4f68] border"
                   />
@@ -161,6 +232,7 @@ const PackageDetails = ({ onChange }: FormProps) => {
                     onChange={(e) => {
                       setHeight(e.target.value);
                       validateField("height", e.target.value);
+                      emitChange({ height: Number(e.target.value) });
                     }}
                     className="bg-[#1a222c] px-2 py-2 rounded-lg placeholder:text-sm w-full min-w-60 border-[#3b4f68] border"
                   />

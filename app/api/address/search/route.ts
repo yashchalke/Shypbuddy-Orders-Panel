@@ -8,19 +8,32 @@ export async function GET(req: NextRequest) {
     if (!token)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      userId: number;
-    };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
 
-    const query = req.nextUrl.searchParams.get("query") || "";
+    const searchParams = req.nextUrl.searchParams;
+    const query = searchParams.get("query");
+    const id = searchParams.get("id");
 
+    // 🆕 Fetch single address by id (edit mode)
+    if (id) {
+      const address = await prisma.address.findFirst({
+        where: {
+          id: Number(id),
+          userId: decoded.userId,
+        },
+      });
+
+      return NextResponse.json(address);
+    }
+
+    // 🔍 Normal search mode
     const addresses = await prisma.address.findMany({
       where: {
-        userId: decoded.userId, // 🔥 ONLY this user’s addresses
+        userId: decoded.userId,
         OR: [
-          { tag: { contains: query, mode: "insensitive" } },
-          { phone: { contains: query } },
-          { address: { contains: query, mode: "insensitive" } },
+          { tag: { contains: query || "", mode: "insensitive" } },
+          { phone: { contains: query || "" } },
+          { address: { contains: query || "", mode: "insensitive" } },
         ],
       },
       take: 6,
