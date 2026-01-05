@@ -6,12 +6,11 @@ import { Filter, Search } from "lucide-react";
 import ReactPaginate from "react-paginate";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const page = () => {
-  const [orders, setorders] = useState<any[]>([]);
+const Page = () => { // Fix: Component name should be PascalCase
+  const [orders, setOrders] = useState<any[]>([]); // Fix: camelCase
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("desc");
   const [showFilter, setShowFilter] = useState(false);
   const [orderid, setOrderId] = useState<string>("");
-
   const [totalPages, setTotalPages] = useState(1);
 
   const router = useRouter();
@@ -32,7 +31,7 @@ const page = () => {
 
       if (!res.ok) throw new Error(data.message || "Failed to fetch orders");
 
-      setorders(Array.isArray(data.orders) ? data.orders : []);
+      setOrders(Array.isArray(data.orders) ? data.orders : []);
       setTotalPages(data.pagination.totalPages);
     } catch (err: any) {
       console.error(err);
@@ -50,9 +49,12 @@ const page = () => {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [page,orderid]);
+  }, [page, orderid]);
 
-  console.log(orders);
+  // ✅ Add this handler to remove deleted order from state
+  const handleDeleteOrder = (orderId: number) => {
+    setOrders((prevOrders) => prevOrders.filter((order) => order.id !== orderId));
+  };
 
   const sortedOrders = React.useMemo(() => {
     if (!sortOrder) return orders;
@@ -102,7 +104,7 @@ const page = () => {
         </button>
 
         {showFilter && (
-          <div className="absolute top-12 right-0 w-52 bg-[#1f2b3a] text-white rounded-lg shadow-lg border border-[#38495e] overflow-hidden">
+          <div className="absolute top-12 right-0 w-52 bg-[#1f2b3a] text-white rounded-lg shadow-lg border border-[#38495e] overflow-hidden z-10">
             <label className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-[#2b394b]">
               <input
                 type="checkbox"
@@ -128,44 +130,57 @@ const page = () => {
         )}
       </div>
 
-      <div className="w-full h-15 bg-white mt-5 rounded-xl p-4 flex items-center justify-between ">
-        <div className="text-black w-full flex justify-between">
-          <h1>Order no.</h1>
-          <h1>Order Details</h1>
-          <h1>Customer Details</h1>
-          <h1>Payment</h1>
-          <h1>Package Details</h1>
-          <h1>Pickup Address</h1>
-          <h1>Rto Address</h1>
-          <h1>Status</h1>
-          <h1>Action</h1>
-        </div>
+      {/* Header Row */}
+      <div className="w-full bg-blue-600 text-white rounded-lg grid grid-cols-9 gap-4 p-4 items-center text-sm mt-4 font-medium">
+        <div className="col-span-1">Order ID</div>
+        <div className="col-span-1">Buyer</div>
+        <div className="col-span-1">Payment</div>
+        <div className="col-span-1">Dimensions</div>
+        <div className="col-span-1">Delivery</div>
+        <div className="col-span-1">RTO</div>
+        <div className="col-span-1">Status</div>
+        <div className="col-span-1">Date</div>
+        <div className="col-span-1">Action</div>
       </div>
+
+      {/* Orders List */}
       <div className="mt-4">
-        {orders.length > 0 && (
+        {orders.length > 0 ? (
           <div className="flex flex-col gap-y-4">
             {sortedOrders.map((order) => (
-              <OrderCard key={order.id} order={order} />
+              <OrderCard 
+                key={order.id} 
+                order={order} 
+                onDelete={handleDeleteOrder} // ✅ Pass the handler here
+              />
             ))}
           </div>
+        ) : (
+          <div className="text-gray-400 text-center py-8 bg-[#334458] rounded-lg">
+            No orders found
+          </div>
         )}
-        <ReactPaginate
-          pageCount={totalPages}
-          forcePage={page - 1} // react-paginate uses 0-based index
-          onPageChange={(e) => setPage(e.selected + 1)}
-          containerClassName="flex justify-center mt-8 gap-2"
-          pageClassName="px-3 py-1 bg-gray-700 rounded cursor-pointer"
-          activeClassName="bg-blue-600"
-          previousLabel="Previous"
-          nextLabel="Next"
-          previousClassName="px-3 py-1 bg-gray-700 rounded"
-          nextClassName="px-3 py-1 bg-gray-700 rounded"
-          disabledClassName="opacity-40"
-          breakLabel="..."
-        />
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <ReactPaginate
+            pageCount={totalPages}
+            forcePage={page - 1}
+            onPageChange={(e) => setPage(e.selected + 1)}
+            containerClassName="flex justify-center mt-8 gap-2"
+            pageClassName="px-3 py-1 bg-gray-700 rounded cursor-pointer"
+            activeClassName="bg-blue-600"
+            previousLabel="Previous"
+            nextLabel="Next"
+            previousClassName="px-3 py-1 bg-gray-700 rounded"
+            nextClassName="px-3 py-1 bg-gray-700 rounded"
+            disabledClassName="opacity-40"
+            breakLabel="..."
+          />
+        )}
       </div>
     </div>
   );
 };
 
-export default page;
+export default Page;

@@ -1,10 +1,41 @@
 "use client";
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useState,useRef,useEffect } from "react";
 import toast from "react-hot-toast";
 
 import { z } from "zod";
 
 const AddressForm = () => {
+    const states = [
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+  ];
+  const [open, setOpen] = useState<boolean>(false);
   const [tag, settag] = useState("");
   const [phone, setphone] = useState("");
   const [address, setaddress] = useState("");
@@ -12,8 +43,9 @@ const AddressForm = () => {
   const [pincode, setpincode] = useState("");
   const [city, setcity] = useState("");
   const [state, setstate] = useState("");
-  const [country, setcountry] = useState("");
+  const [country, setcountry] = useState("India");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const validateSingleField = (key: string, value: string) => {
     const partial = AddressSchema.pick({ [key]: true } as any);
@@ -100,6 +132,23 @@ const AddressForm = () => {
     } catch (err) {
       toast.error("Failed Adding new Address");
     }
+  };
+
+    useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectState = (selectedState: string) => {
+    setstate(selectedState);
+    validateSingleField("state", selectedState);
+    setOpen(false);
   };
 
   return (
@@ -208,7 +257,7 @@ const AddressForm = () => {
                 <p className="text-red-400 text-xs">{errors.city}</p>
               )}
             </div>
-            <div className="flex-1 flex-col gap-2">
+            {/* <div className="flex-1 flex-col gap-2">
               <label className="text-sm">State<span className='text-red-500 ml-1'>*</span></label>
               <input
                 type="text"
@@ -223,8 +272,72 @@ const AddressForm = () => {
               {errors.state && (
                 <p className="text-red-400 text-xs">{errors.state}</p>
               )}
+            </div> */}
+             <div className="flex-1 flex-col gap-2 max-w-xs" ref={dropdownRef}>
+        <label className="text-sm">
+          State<span className="text-red-500 ml-1">*</span>
+        </label>
+
+        {/* Dropdown Button */}
+        <div className="relative mt-2">
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="bg-[#1a222c] p-2 rounded-lg text-sm w-full border-[#3b4f68] border flex items-center justify-between text-left"
+          >
+            <span className={state ? "text-white" : "text-gray-400"}>
+              {state || "Select State"}
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="m19 9-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {/* Dropdown Menu */}
+          {open && (
+            <div className="absolute top-full left-0 mt-1 z-10 bg-[#1a222c] border border-[#3b4f68] rounded-lg shadow-lg w-full max-h-60 overflow-y-auto">
+              <ul className="p-2 text-sm">
+                {states.map((item) => (
+                  <li key={item}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectState(item)}
+                      className={`inline-flex items-center w-full p-2 hover:bg-[#2a3a4c] rounded text-left ${
+                        state === item ? "bg-[#2a3a4c] text-blue-400" : ""
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="flex-1 flex-col gap-2">
+          )}
+        </div>
+
+        {/* Error Message */}
+        {errors.state && (
+          <p className="text-red-400 text-xs mt-1">{errors.state}</p>
+        )}
+
+        {/* Display selected value (for testing) */}
+        {state && (
+          <p className="text-green-400 text-xs mt-2">Selected: {state}</p>
+        )}
+      </div>
+            {/* <div className="flex-1 flex-col gap-2">
               <label className="text-sm">Country<span className='text-red-500 ml-1'>*</span></label>
               <input
                 type="text"
@@ -239,7 +352,7 @@ const AddressForm = () => {
               {errors.country && (
                 <p className="text-red-400 text-xs">{errors.country}</p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
         <div className="flex justify-end gap-x-2 mt-5">

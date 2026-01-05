@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type FormProps = {
@@ -15,90 +14,115 @@ const Pickupform = ({ onChange }: FormProps) => {
 
   const [rtochecked, setrtochecked] = useState(true);
 
+  // Search Inputs
   const [query, setQuery] = useState("");
   const [rtoQuery, setRtoQuery] = useState("");
 
+  // Search Results
   const [results, setResults] = useState<any[]>([]);
   const [rtoResults, setRtoResults] = useState<any[]>([]);
 
+  // Selected Objects
   const [selectedPickup, setSelectedPickup] = useState<any>(null);
   const [selectedRTO, setSelectedRTO] = useState<any>(null);
 
-  useEffect(() => {
-    if (!query.trim()) return setResults([]);
+  // Visibility Controls
+  const [showPickup, setShowPickup] = useState(false);
+  const [showRto, setShowRto] = useState(false);
 
-    const t = setTimeout(async () => {
-      const res = await fetch(`/api/address/search?query=${query}`);
+  // Fetch logic
+  const fetchAddresses = async (searchTerm: string, type: "pickup" | "rto") => {
+    try {
+      const res = await fetch(`/api/address/search?query=${searchTerm}`);
       const data = await res.json();
-      setResults(data);
-    }, 400);
+      if (type === "pickup") setResults(data);
+      else setRtoResults(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-    return () => clearTimeout(t);
-  }, [query]);
-
+  // Debounce Effect for Pickup
   useEffect(() => {
-    if (!rtoQuery.trim()) return setRtoResults([]);
-
-    const t = setTimeout(async () => {
-      const res = await fetch(`/api/address/search?query=${rtoQuery}`);
-      const data = await res.json();
-      setRtoResults(data);
-    }, 400);
-
+    if (!showPickup) return;
+    const t = setTimeout(() => fetchAddresses(query, "pickup"), 400);
     return () => clearTimeout(t);
-  }, [rtoQuery]);
+  }, [query, showPickup]);
 
-  // 📤 Send only IDs to parent
-  //   useEffect(() => {
-  //     onChange({
-  //       addressId: selectedPickup?.id || null,
-  //       rtoAddressId: rtochecked
-  //         ? selectedPickup?.id || null
-  //         : selectedRTO?.id || null,
-  //     });
-  //   }, [selectedPickup, selectedRTO, rtochecked]);
+  // Debounce Effect for RTO
+  useEffect(() => {
+    if (!showRto || rtochecked) return;
+    const t = setTimeout(() => fetchAddresses(rtoQuery, "rto"), 400);
+    return () => clearTimeout(t);
+  }, [rtoQuery, showRto, rtochecked]);
 
   return (
     <div>
       <h1 className="font-bold text-lg">Pick up Form</h1>
 
+      {/* --- PICKUP ADDRESS SECTION --- */}
       <div className="relative md:w-[50%]">
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search pickup address"
           className="w-full border py-2 px-3 rounded-lg mt-2 bg-[#1a222c] border-[#3b4f68]"
+          onChange={(e) => setQuery(e.target.value)}
+          
+          // 1. Show on focus
+          onFocus={() => {
+            setShowPickup(true);
+            fetchAddresses(query, "pickup");
+          }}
+          
+          // 2. Hide on blur (click away)
+          onBlur={() => setShowPickup(false)}
         />
 
-        {results.map((addr) => (
-          <div
-            key={addr.id}
-            onClick={() => {
-              setSelectedPickup(addr);
-
-              setResults([]);
-              setQuery(addr.tag || "");
-              onChange({
-                addressId: addr.id,
-                rtoAddressId: rtochecked ? addr.id : selectedRTO?.id || null,
-              });
-            }}
-            className="p-2 hover:bg-[#2c3a4b] cursor-pointer text-sm"
-          >
-            <p className="font-semibold">{addr.tagName}</p>
-            <p className="text-xs text-gray-400">
-              {addr.tag}, {addr.address}, {addr.city}
-            </p>
+        {showPickup && results.length > 0 && (
+          <div className="absolute z-20 w-full bg-[#1a222c] border border-[#3b4f68] rounded-lg mt-1 max-h-60 overflow-y-auto shadow-xl">
+            {results.map((addr) => (
+              <div
+                key={addr.id}
+                // 3. USE onMouseDown INSTEAD OF onClick
+                onMouseDown={(e) => {
+                  e.preventDefault(); // Prevents input blur, ensuring this runs first!
+                  
+                  setSelectedPickup(addr);
+                  setQuery(addr.tag || ""); // Update input text
+                  setShowPickup(false); // Close dropdown
+                  
+                  // Trigger parent update
+                  onChange({
+                    addressId: addr.id,
+                    rtoAddressId: rtochecked ? addr.id : selectedRTO?.id || null,
+                  });
+                }}
+                className="p-2 hover:bg-[#2c3a4b] cursor-pointer text-sm border-b border-[#2c3a4b]"
+              >
+                <p className="font-semibold">{addr.tag}</p>
+                <p className="text-xs text-gray-400">
+                  {addr.tag}, {addr.address}, {addr.city}
+                </p>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
-      {/* RTO CHECKBOX */}
+      {/* --- CHECKBOX --- */}
       <div className="flex gap-2 mt-4 items-center">
         <input
           type="checkbox"
           checked={rtochecked}
-          onChange={() => setrtochecked(!rtochecked)}
+          onChange={() => {
+            const newVal = !rtochecked;
+            setrtochecked(newVal);
+            // Update parent immediately when checkbox toggles
+            onChange({
+              addressId: selectedPickup?.id || null,
+              rtoAddressId: newVal ? selectedPickup?.id || null : selectedRTO?.id || null,
+            });
+          }}
         />
         <p>RTO same as Pickup</p>
       </div>
@@ -111,30 +135,44 @@ const Pickupform = ({ onChange }: FormProps) => {
         + New Pickup Address
       </button>
 
-      {/* RTO SEARCH */}
+      {/* --- RTO ADDRESS SECTION --- */}
       {!rtochecked && (
         <div className="relative md:w-[50%] mt-3">
           <input
             value={rtoQuery}
-            onChange={(e) => setRtoQuery(e.target.value)}
             placeholder="Search RTO address"
             className="w-full border py-2 px-3 rounded-lg bg-[#1a222c] border-[#3b4f68]"
+            onChange={(e) => setRtoQuery(e.target.value)}
+            onFocus={() => {
+              setShowRto(true);
+              fetchAddresses(rtoQuery, "rto");
+            }}
+            onBlur={() => setShowRto(false)}
           />
 
-          {rtoResults.length > 0 && (
-            <div className="absolute z-20 w-full bg-[#1a222c] border border-[#3b4f68] rounded-lg mt-1">
+          {showRto && rtoResults.length > 0 && (
+            <div className="absolute z-20 w-full bg-[#1a222c] border border-[#3b4f68] rounded-lg mt-1 max-h-60 overflow-y-auto shadow-xl">
               {rtoResults.map((addr) => (
                 <div
                   key={addr.id}
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Critical for selection to work
+                    
                     setSelectedRTO(addr);
-                    setRtoQuery(addr.tagName || "");
-                    setRtoResults([]);
+                    setRtoQuery(addr.tag || "");
+                    setShowRto(false);
+                    
+                    onChange({
+                      addressId: selectedPickup?.id || null,
+                      rtoAddressId: addr.id,
+                    });
                   }}
-                  className="p-2 hover:bg-[#2c3a4b] cursor-pointer text-sm"
+                  className="p-2 hover:bg-[#2c3a4b] cursor-pointer text-sm border-b border-[#2c3a4b]"
                 >
-                  <b>{addr.tagName}</b>
-                  <p className="text-xs">{addr.address}</p>
+                  <b>{addr.tag}</b>
+                  <p className="text-xs text-gray-400">
+                  {addr.tag}, {addr.address}, {addr.city}
+                </p>
                 </div>
               ))}
             </div>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import { z } from "zod";
 
 type FormProps = {
@@ -7,6 +7,37 @@ type FormProps = {
 };
 
 const BuyersDetailsForm = ({ onChange }: FormProps) => {
+   const states = [
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+  ];
+  
   const buyersSchema = z.object({
     buyersname: z.string().min(2, "Name must be at least 2 characters"),
     buyersnumber: z.string().regex(/^\d{10}$/, "Number must be 10 digits"),
@@ -35,7 +66,11 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
   const [landmark, setlandmark] = useState("");
   const [city, setcity] = useState("");
   const [state, setstate] = useState("");
-  const [country, setcountry] = useState("");
+  const [country, setcountry] = useState("India");
+  const [open, setOpen] = useState<boolean>(false);
+  const [Catopen, setCatOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const CatdropdownRef = useRef<HTMLDivElement>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -50,7 +85,6 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
     landmark,
     city,
     state,
-    country,
   };
 
   useEffect(() => {
@@ -66,7 +100,6 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
     landmark,
     city,
     state,
-    country,
   ]);
 
   const validateField = (key: string, value: string) => {
@@ -95,7 +128,6 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
       landmark,
       city,
       state,
-      country,
     };
 
     const result = buyersSchema.safeParse(formData);
@@ -112,6 +144,23 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
     alert("Buyer Details Validated Successfully");
     console.log("Final Data:", result.data);
   };
+
+  useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+          setOpen(false);
+        }
+      };
+  
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+  
+    const handleSelectState = (selectedState: string) => {
+      setstate(selectedState);
+      validateField("state", selectedState);
+      setOpen(false);
+    };
 
   return (
     <div className="mt-6">
@@ -294,7 +343,7 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
                 <p className="text-red-400 text-xs">{errors.city}</p>
               )}
             </div>
-            <div className="flex-1 flex-col gap-2">
+            {/* <div className="flex-1 flex-col gap-2">
               <label className="text-sm">
                 Buyer's State<span className="text-red-500 ml-1">*</span>
               </label>
@@ -311,8 +360,74 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
               {errors.state && (
                 <p className="text-red-400 text-xs">{errors.state}</p>
               )}
+            </div> */}
+
+            <div className="flex-1 flex-col gap-2 " ref={dropdownRef}>
+        <label className="text-sm">
+          State<span className="text-red-500 ml-1">*</span>
+        </label>
+
+        {/* Dropdown Button */}
+        <div className="relative mt-2">
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="bg-[#1a222c] px-2 py-1 rounded-lg placeholder:text-sm w-full border-[#3b4f68] border flex items-center justify-between text-left"
+          >
+            <span className={state ? "text-white" : "text-gray-400"}>
+              {state || "Select State"}
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="m19 9-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {/* Dropdown Menu */}
+          {open && (
+            <div className="absolute top-full left-0 mt-1 z-10 bg-[#1a222c] border border-[#3b4f68] rounded-lg shadow-lg w-full max-h-60 overflow-y-auto">
+              <ul className="p-2 text-sm">
+                {states.map((item) => (
+                  <li key={item}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectState(item)}
+                      className={`inline-flex items-center w-full p-2 hover:bg-[#2a3a4c] rounded text-left ${
+                        state === item ? "bg-[#2a3a4c] text-blue-400" : ""
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="flex-1 flex-col gap-2">
+          )}
+        </div>
+
+        {/* Error Message */}
+        {errors.state && (
+          <p className="text-red-400 text-xs mt-1">{errors.state}</p>
+        )}
+
+        {/* Display selected value (for testing) */}
+        {state && (
+          <p className="text-green-400 text-xs mt-2">Selected: {state}</p>
+        )}
+      </div>
+
+            {/* <div className="flex-1 flex-col gap-2">
               <label className="text-sm">
                 Buyer's Country<span className="text-red-500 ml-1">*</span>
               </label>
@@ -329,7 +444,7 @@ const BuyersDetailsForm = ({ onChange }: FormProps) => {
               {errors.country && (
                 <p className="text-red-400 text-xs">{errors.country}</p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </form>
