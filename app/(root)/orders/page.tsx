@@ -162,7 +162,7 @@ const Page = () => {
         <div className="col-span-1">Buyer</div>
         <div className="col-span-1">Payment</div>
         <div className="col-span-1">Dimensions</div>
-        <div className="col-span-1">Delivery</div>
+        <div className="col-span-1">Pickup</div>
         <div className="col-span-1">RTO</div>
         <div className="col-span-1">Status</div>
         <div className="col-span-1">Date</div>

@@ -1,4 +1,5 @@
 "use client";
+import { redirect, useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Pickupform from "./(components)/Pickupform";
 import BuyersDetailsForm from "./(components)/BuyersDetailsForm";
@@ -30,7 +31,7 @@ type ShipmentData = {
 // };
 
 const page = () => {
-  
+  const router = useRouter()
   const [dangerousGoods, setDangerousGoods] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<"PREPAID" | "COD">(
     "PREPAID"
@@ -310,6 +311,10 @@ const page = () => {
       toast.success(
         isEditMode ? "Order Updated Successfully" : "Order Created Successfully"
       );
+
+      setTimeout(() => {
+        redirect('/orders')
+      }, 400);
     } catch (err: any) {
       toast.error(err.message);
     }

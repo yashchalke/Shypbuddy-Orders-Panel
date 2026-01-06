@@ -1,6 +1,6 @@
 "use client";
 import { Delete } from "lucide-react";
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { z } from "zod";
 
@@ -18,33 +18,35 @@ const productSchema = z.object({
   price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter valid price"),
 });
 
-const ProductDetailsForm = ({ value,onChange }: FormProps) => {
+const ProductDetailsForm = ({ value, onChange }: FormProps) => {
   const categories = [
-      "Others",
-      "Clothes",
-      "Accessories",
-      "Automotive And Accessories",
-      "Baby And Toddler",
-      "Beauty And Personal Care",
-      "Books Media And Magazines",
-      "Computers And Accessories",
-      "Consumer Electronics",
-      "Grocery And Gourmet Food",
-      "Furniture And Decor",
-      "Health And Household",
-      "Home And Kitchen",
-      "Jewelry And Watches",
-      "Musical Instruments",
-      "Office Products",
-      "Outdoors And Sports",
-      "Pet Supplies",
-      "Shoes And Handbags",
-      "Software And Services",
-      "Toys And Games",
-      "Tools And Home Improvement",
-    ];
-  
+    "Others",
+    "Clothes",
+    "Accessories",
+    "Automotive And Accessories",
+    "Baby And Toddler",
+    "Beauty And Personal Care",
+    "Books Media And Magazines",
+    "Computers And Accessories",
+    "Consumer Electronics",
+    "Grocery And Gourmet Food",
+    "Furniture And Decor",
+    "Health And Household",
+    "Home And Kitchen",
+    "Jewelry And Watches",
+    "Musical Instruments",
+    "Office Products",
+    "Outdoors And Sports",
+    "Pet Supplies",
+    "Shoes And Handbags",
+    "Software And Services",
+    "Toys And Games",
+    "Tools And Home Improvement",
+  ];
+
   const [products, setproducts] = useState<any[]>([]);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+
   const isSyncing = useRef(false);
 
   const [name, setname] = useState("");
@@ -60,30 +62,49 @@ const ProductDetailsForm = ({ value,onChange }: FormProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleRemove = (index: number) => {
-  setproducts((prev) => prev.filter((_, i) => i !== index));
-};
+    setproducts((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      onChange(updated);
+      return updated;
+    });
+  };
+
+  const handleEdit = (index: number) => {
+    const p = products[index];
+    setname(p.name);
+    setCategory(p.category);
+    setsku(p.SKU);
+    sethsn(p.HSN);
+    setprice(String(p.unitPrice));
+    setquantity(String(p.quantity));
+    setEditIndex(index);
+  };
+
+  //   useEffect(() => {
+  //   if (!products.length && !value?.length) return;
+
+  //   const same =
+  //     JSON.stringify(products) === JSON.stringify(value);
+
+  //   if (same) return;      // ⛔ prevents loop
+
+  //   onChange(products);
+  // }, [products]);
 
   useEffect(() => {
-  if (!products.length && !value?.length) return;
-
-  const same =
-    JSON.stringify(products) === JSON.stringify(value);
-
-  if (same) return;      // ⛔ prevents loop
-
-  onChange(products);
-}, [products]);
+    if (!Array.isArray(value)) return;
+    setproducts(value);
+  }, [value]);
 
   useEffect(() => {
-  if (!Array.isArray(value)) return;
+    if (!Array.isArray(value)) return;
 
-  const same =
-    JSON.stringify(value) === JSON.stringify(products);
+    const same = JSON.stringify(value) === JSON.stringify(products);
 
-  if (same) return;      // ⛔ prevents loop
+    if (same) return; // ⛔ prevents loop
 
-  setproducts(value);
-}, [value]);
+    setproducts(value);
+  }, [value]);
 
   const validateField = (key: string, value: string) => {
     const partial = productSchema.pick({ [key]: true } as any);
@@ -97,14 +118,17 @@ const ProductDetailsForm = ({ value,onChange }: FormProps) => {
     });
   };
 
-   const filteredCategories = categories.filter((item) =>
+  const filteredCategories = categories.filter((item) =>
     item.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
         setSearchTerm("");
       }
@@ -119,6 +143,17 @@ const ProductDetailsForm = ({ value,onChange }: FormProps) => {
     validateField("category", selectedCategory);
     setOpen(false);
     setSearchTerm("");
+  };
+
+  const resetProductForm = () => {
+    setname("");
+    setCategory("");
+    setsku("");
+    sethsn("");
+    setquantity("");
+    setprice("");
+    setErrors({});
+    setEditIndex(null);
   };
 
   const addProduct = () => {
@@ -142,19 +177,35 @@ const ProductDetailsForm = ({ value,onChange }: FormProps) => {
       HSN: hsn,
       unitPrice: Number(price),
       quantity: Number(quantity),
-      total: Number(price) * Number(quantity)
+      total: Number(price) * Number(quantity),
     };
 
-    setproducts((prev) => [...prev, payload]);
-    toast.success("Product Added Successfully");
+    let updatedProducts: any[] = [];
 
-    setname("");
-    setCategory("");
-    setsku("");
-    sethsn("");
-    setquantity("");
-    setprice("");
-    setErrors({});
+    setproducts((prev) => {
+      if (editIndex !== null) {
+        updatedProducts = [...prev];
+        updatedProducts[editIndex] = payload;
+      } else {
+        updatedProducts = [...prev, payload];
+      }
+
+      return updatedProducts;
+    });
+
+    onChange(
+      editIndex !== null
+        ? products.map((p, i) => (i === editIndex ? payload : p))
+        : [...products, payload]
+    );
+
+    toast.success(
+      editIndex !== null
+        ? "Product Updated Successfully"
+        : "Product Added Successfully"
+    );
+
+    resetProductForm();
   };
 
   return (
@@ -202,87 +253,93 @@ const ProductDetailsForm = ({ value,onChange }: FormProps) => {
             )}
           </div> */}
 
-           <div className="flex-1 flex-col gap-2" ref={dropdownRef}>
-        <label className="text-sm">
-          Category<span className="text-red-500 ml-1">*</span>
-        </label>
+          <div className="flex-1 flex-col gap-2" ref={dropdownRef}>
+            <label className="text-sm">
+              Category<span className="text-red-500 ml-1">*</span>
+            </label>
 
-        {/* Dropdown Button */}
-        <div className="relative mt-2">
-          <button
-            type="button"
-            onClick={() => setOpen(!open)}
-            className="bg-[#1a222c] px-2 py-1 rounded-lg placeholder:text-sm w-full border-[#3b4f68] border flex items-center justify-between text-left"
-          >
-            <span className={category ? "text-white" : "text-gray-400"}>
-              {category || "Select Category"}
-            </span>
-            <svg
-              className={`w-4 h-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="m19 9-7 7-7-7"
-              />
-            </svg>
-          </button>
+            {/* Dropdown Button */}
+            <div className="relative mt-2">
+              <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="bg-[#1a222c] px-2 py-1 rounded-lg placeholder:text-sm w-full border-[#3b4f68] border flex items-center justify-between text-left"
+              >
+                <span className={category ? "text-white" : "text-gray-400"}>
+                  {category || "Select Category"}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    open ? "rotate-180" : ""
+                  }`}
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="m19 9-7 7-7-7"
+                  />
+                </svg>
+              </button>
 
-          {/* Dropdown Menu */}
-          {open && (
-            <div className="absolute top-full left-0 mt-1 z-10 bg-[#1a222c] border border-[#3b4f68] rounded-lg shadow-lg w-full">
-              {/* Search Input */}
-              <div className="p-2 border-b border-[#3b4f68]">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search category..."
-                  className="bg-[#2a3a4c] p-2 rounded text-sm w-full border-none outline-none placeholder:text-gray-400"
-                  autoFocus
-                />
-              </div>
+              {/* Dropdown Menu */}
+              {open && (
+                <div className="absolute top-full left-0 mt-1 z-10 bg-[#1a222c] border border-[#3b4f68] rounded-lg shadow-lg w-full">
+                  {/* Search Input */}
+                  <div className="p-2 border-b border-[#3b4f68]">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search category..."
+                      className="bg-[#2a3a4c] p-2 rounded text-sm w-full border-none outline-none placeholder:text-gray-400"
+                      autoFocus
+                    />
+                  </div>
 
-              {/* Category List */}
-              <ul className="p-2 text-sm max-h-60 overflow-y-auto">
-                {filteredCategories.length > 0 ? (
-                  filteredCategories.map((item) => (
-                    <li key={item}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectCategory(item)}
-                        className={`inline-flex items-center w-full p-2 hover:bg-[#2a3a4c] rounded text-left transition-colors ${
-                          category === item ? "bg-[#2a3a4c] text-blue-400" : ""
-                        }`}
-                      >
-                        {item}
-                      </button>
-                    </li>
-                  ))
-                ) : (
-                  <li className="p-2 text-gray-400 text-center">No categories found</li>
-                )}
-              </ul>
+                  {/* Category List */}
+                  <ul className="p-2 text-sm max-h-60 overflow-y-auto">
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map((item) => (
+                        <li key={item}>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectCategory(item)}
+                            className={`inline-flex items-center w-full p-2 hover:bg-[#2a3a4c] rounded text-left transition-colors ${
+                              category === item
+                                ? "bg-[#2a3a4c] text-blue-400"
+                                : ""
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-2 text-gray-400 text-center">
+                        No categories found
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Error Message */}
-        {errors.category && (
-          <p className="text-red-400 text-xs mt-1">{errors.category}</p>
-        )}
+            {/* Error Message */}
+            {errors.category && (
+              <p className="text-red-400 text-xs mt-1">{errors.category}</p>
+            )}
 
-        {/* Display selected value */}
-        {/* {category && (
+            {/* Display selected value */}
+            {/* {category && (
           <p className="text-green-400 text-xs mt-2">Selected: {category}</p>
         )} */}
-      </div>
+          </div>
 
           <div className="flex-1 flex-col gap-2">
             <label className="text-sm">SKU</label>
@@ -352,53 +409,64 @@ const ProductDetailsForm = ({ value,onChange }: FormProps) => {
         <button
           type="button"
           onClick={addProduct}
-          className="bg-purple-400 px-5 py-2 rounded-lg mt-5 cursor-pointer hover:bg-purple-500"
+          className={`px-5 py-2 rounded-lg mt-5 cursor-pointer ${
+            editIndex !== null
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-purple-400 hover:bg-purple-500"
+          }`}
         >
-          Add Product
+          {editIndex !== null ? "Update Product" : "Add Product"}
         </button>
       </form>
 
       {products.length !== 0 && (
-  <div className="mt-4 grid md:grid-cols-3 lg:grid-cols-4 gap-4">
-    {products.map((item, index) => (
-      <div key={index} className="flex-1 min-w-60">
-        <div className="rounded-xl p-2 bg-[#344e6e]">
-          <div className="p-2 flex justify-between border-b">
-            <h1>{item.name}</h1>
-            <button
-              type="button"
-              onClick={() => handleRemove(index)}
-              className="text-red-400 hover:text-red-500"
-            >
-              ✕
-            </button>
-          </div>
+        <div className="mt-4 grid md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {products.map((item, index) => (
+            <div key={index} className="flex-1 min-w-60">
+              <div className="rounded-xl p-2 bg-[#344e6e]">
+                <div className="p-2 flex justify-between border-b">
+                  <h1>{item.name}</h1>
+                  <div className="flex gap-x-4">
+                    <button
+                      onClick={() => handleEdit(index)}
+                      className="text-green-500 underline cursor-pointer"
+                    >
+                      edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(index)}
+                      className="text-red-400 hover:text-red-500"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
 
-          <div className="mt-2 p-2 flex flex-col gap-2 border-b">
-            <div className="flex justify-between">
-              <h1>Category</h1>
-              <h1>{item.category}</h1>
-            </div>
-            <div className="flex justify-between">
-              <h1>Quantity</h1>
-              <h1>{item.quantity}</h1>
-            </div>
-            <div className="flex justify-between">
-              <h1>Price</h1>
-              <h1>{item.unitPrice}</h1>
-            </div>
-          </div>
+                <div className="mt-2 p-2 flex flex-col gap-2 border-b">
+                  <div className="flex justify-between">
+                    <h1>Category</h1>
+                    <h1>{item.category}</h1>
+                  </div>
+                  <div className="flex justify-between">
+                    <h1>Quantity</h1>
+                    <h1>{item.quantity}</h1>
+                  </div>
+                  <div className="flex justify-between">
+                    <h1>Price</h1>
+                    <h1>{item.unitPrice}</h1>
+                  </div>
+                </div>
 
-          <div className="p-2 flex justify-between">
-            <h1>Total</h1>
-            <h1>{item.unitPrice * item.quantity}</h1>
-          </div>
+                <div className="p-2 flex justify-between">
+                  <h1>Total</h1>
+                  <h1>{item.unitPrice * item.quantity}</h1>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-    ))}
-  </div>
-)}
-
+      )}
 
       <div className="border-b mt-10 border-[#38495e]"></div>
     </div>
