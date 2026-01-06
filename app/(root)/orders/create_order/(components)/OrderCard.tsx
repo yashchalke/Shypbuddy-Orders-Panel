@@ -3,6 +3,11 @@ import toast from "react-hot-toast";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DeleteOrderDialog from "./DeleteOrderDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 type Props = {
   order: any;
@@ -40,11 +45,37 @@ const OrderCard = ({ order, onDelete }: Props) => {
   };
 
   return (
-    <div className="w-full bg-[#334458] rounded-lg grid grid-cols-9 gap-4 p-4 items-center text-sm">
+    <div className="w-full bg-[#334458] rounded-lg grid grid-cols-10 gap-4 p-4 items-center text-sm">
       {/* Order ID */}
       <div className="col-span-1">
         <span className="text-white font-medium">#{order.id}</span>
       </div>
+
+        {/* products */}
+      <div className="col-span-1">
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <span className="text-white font-medium cursor-pointer underline decoration-dotted">
+        package<br /> details
+      </span>
+    </TooltipTrigger>
+
+    <TooltipContent className="bg-[#1f2b3a] border border-[#38495e] text-white p-3 rounded-lg shadow-lg">
+      <div className="text-xs space-y-2 min-w-[180px]">
+        <p className="font-semibold text-sm mb-1">Products</p>
+
+        {order.products.map((item: any, index: number) => (
+          <div key={index} className="flex justify-between gap-4">
+            <span className="truncate max-w-[90px]">{item.product.name}</span>
+            <span>× {item.quantity}</span>
+            <span>₹{item.unitPrice}</span>
+          </div>
+        ))}
+      </div>
+    </TooltipContent>
+  </Tooltip>
+</div>
+
 
       {/* Buyer */}
       <div className="col-span-1">

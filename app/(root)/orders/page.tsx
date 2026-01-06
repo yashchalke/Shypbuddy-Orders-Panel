@@ -157,8 +157,9 @@ const Page = () => {
       </div>
 
       {/* Header Row */}
-      <div className="w-full bg-blue-600 text-white rounded-lg grid grid-cols-9 gap-4 p-4 items-center text-sm mt-4 font-medium">
+      <div className="w-full bg-blue-600 text-white rounded-lg grid grid-cols-10 gap-4 p-4 items-center text-sm mt-4 font-medium">
         <div className="col-span-1">Order ID</div>
+        <div className="col-span-1">Products</div>
         <div className="col-span-1">Buyer</div>
         <div className="col-span-1">Payment</div>
         <div className="col-span-1">Dimensions</div>
