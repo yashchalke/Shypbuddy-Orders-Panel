@@ -10,7 +10,7 @@ export default function DateRangePicker({ onApply }: Props) {
   const [to, setTo] = useState<string | null>(null);
 
   return (
-    <div className="bg-[#1f2b3a] p-4 rounded-lg flex gap-4 items-end border border-[#38495e]">
+    <div className="bg-[#1f2b3a] p-4 rounded-lg flex flex-col gap-4 border border-[#38495e]">
       <div className="flex flex-col gap-1">
         <label className="text-xs text-gray-400">From</label>
         <input

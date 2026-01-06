@@ -6,6 +6,7 @@ import { Filter, Search } from "lucide-react";
 import ReactPaginate from "react-paginate";
 import { useRouter, useSearchParams } from "next/navigation";
 import DateRangePicker from "./create_order/(components)/DateRangePicker";
+import FilterSidebar from "./create_order/(components)/FilterSidebar";
 
 const Page = () => {
   const [orders, setOrders] = useState<any[]>([]);
@@ -110,23 +111,32 @@ const Page = () => {
       </div>
 
       <div className="mt-4 w-full flex justify-end relative gap-x-4">
-        <DateRangePicker
+        {/* <DateRangePicker
           onApply={(range) => {
             setPage(1);
             setDateRange(range);
             fetchOrders(orderid, range, 1); // 🔥 immediate fetch
           }}
-        />
+        /> */}
 
-        <button
+        {/* <button
           onClick={() => setShowFilter((p) => !p)}
           className="bg-white text-black px-4 py-2 rounded-lg flex items-center gap-x-2 h-15"
         >
           <Filter size={15} />
           <span>Filter</span>
-        </button>
+        </button> */}
+        <FilterSidebar
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          onApply={(range) => {
+            setPage(1);
+            setDateRange(range);
+            fetchOrders(orderid, range, 1);
+          }}
+        />
 
-        {showFilter && (
+        {/* {showFilter && (
           <div className="absolute top-12 right-0 w-52 bg-[#1f2b3a] text-white rounded-lg shadow-lg border border-[#38495e] overflow-hidden z-10">
             <label className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-[#2b394b]">
               <input
@@ -153,11 +163,11 @@ const Page = () => {
               <p className="text-xs text-gray-400 mb-2">Filter by date</p>
             </div>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Header Row */}
-      <div className="w-full bg-blue-600 text-white rounded-lg grid grid-cols-10 gap-4 p-4 items-center text-sm mt-4 font-medium">
+      <div className="hidden lg:grid w-full bg-blue-600 text-white rounded-lg  grid-cols-10 gap-4 p-4 items-center text-sm mt-4 font-medium">
         <div className="col-span-1">Order ID</div>
         <div className="col-span-1">Products</div>
         <div className="col-span-1">Buyer</div>
@@ -168,6 +178,11 @@ const Page = () => {
         <div className="col-span-1">Status</div>
         <div className="col-span-1">Date</div>
         <div className="col-span-1">Action</div>
+      </div>
+      <div className="lg:hidden w-full bg-blue-600 text-white rounded-lg  grid-cols-10 gap-4 p-4 items-center text-sm mt-4 font-medium">
+        <h1>
+          Orders
+        </h1>
       </div>
 
       {/* Orders List */}
