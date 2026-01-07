@@ -150,11 +150,11 @@ const page = () => {
           alternateNumber: order.buyer.alternateNumber || "",
           email: order.buyer.email,
           // orderno: order.orderNo || "",
-          address: order.address.address,
-          pincode: order.address.pincode,
-          landmark: order.address.landmark,
-          city: order.address.city,
-          state: order.address.state,
+          address: order.buyer.address,
+          pincode: order.buyer.pincode,
+          landmark: order.buyer.landmark,
+          city: order.buyer.city,
+          state: order.buyer.state,
         },
 
         package: {

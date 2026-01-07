@@ -73,29 +73,99 @@ const BuyersDetailsForm = ({ value, onChange }: FormProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const CatdropdownRef = useRef<HTMLDivElement>(null);
   const isSyncing = useRef(false);
+  const [isFetchingPin, setIsFetchingPin] = useState(false);
+  const lastFetchedPin = useRef<string | null>(null);
+  const isAutoFilling = useRef(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (!value) return;
+const fetchPincodeDetails = async (pin: string) => {
+  try {
+    isAutoFilling.current = true;
+    setIsFetchingPin(true);
 
-    isSyncing.current = true;
+    const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+    const data = await res.json();
 
-    setbuyersname(value.name || "");
-    setbuyersnumber(value.phone || "");
-    setalternatenumber(value.alternateNumber || "");
-    setemail(value.email || "");
-    setorderno(value.orderno || "");
-    setaddress(value.address || "");
-    setpincode(value.pincode || "");
-    setlandmark(value.landmark || "");
-    setcity(value.city || "");
-    setstate(value.state || "");
+    if (!Array.isArray(data) || !data[0]?.PostOffice?.length) return;
 
+    const po = data[0].PostOffice[0];
+
+    const landmarkVal = po.Name || "";
+    const cityVal = po.Region || "";
+    const stateVal = po.State || "";
+
+    setlandmark(landmarkVal);
+    setcity(cityVal);
+    setstate(stateVal);
+
+    onChange({
+      landmark: landmarkVal,
+      city: cityVal,
+      state: stateVal,
+    });
+  } catch (err) {
+    console.error("Pincode fetch failed", err);
+  } finally {
     setTimeout(() => {
-      isSyncing.current = false;
+      isAutoFilling.current = false;
+      setIsFetchingPin(false);
     }, 0);
-  }, [value]);
+  }
+};
+
+
+
+  useEffect(() => {
+  if (!value || isAutoFilling.current) return;
+
+  const incoming = {
+    name: value.name || "",
+    phone: value.phone || "",
+    alternateNumber: value.alternateNumber || "",
+    email: value.email || "",
+    orderno: value.orderno || "",
+    address: value.address || "",
+    pincode: value.pincode || "",
+    landmark: value.landmark || "",
+    city: value.city || "",
+    state: value.state || "",
+  };
+
+  const current = {
+    name: buyersname,
+    phone: buyersnumber,
+    alternateNumber: alternatenumber,
+    email,
+    orderno,
+    address,
+    pincode,
+    landmark,
+    city,
+    state,
+  };
+
+  // 🛑 Stop overwrite loops
+  if (JSON.stringify(incoming) === JSON.stringify(current)) return;
+
+  isSyncing.current = true;
+
+  setbuyersname(incoming.name);
+  setbuyersnumber(incoming.phone);
+  setalternatenumber(incoming.alternateNumber);
+  setemail(incoming.email);
+  setorderno(incoming.orderno);
+  setaddress(incoming.address);
+  setpincode(incoming.pincode);
+  setlandmark(incoming.landmark);
+  setcity(incoming.city);
+  setstate(incoming.state);
+
+  setTimeout(() => {
+    isSyncing.current = false;
+  }, 0);
+}, [value]);
+
   const formData = {
     name: buyersname,
     phone: buyersnumber,
@@ -323,8 +393,15 @@ const BuyersDetailsForm = ({ value, onChange }: FormProps) => {
                 pattern="[0-9]*"
                 maxLength={6}
                 onChange={(e) => {
-                  setpincode(e.target.value.replace(/[^0-9]/g, ""));
-                  validateField("pincode", e.target.value);
+                  const pin = e.target.value.replace(/[^0-9]/g, "");
+                  setpincode(pin);
+                  validateField("pincode", pin);
+                  onChange({ pincode: pin });
+
+                  if (pin.length === 6 && pin !== lastFetchedPin.current) {
+                    lastFetchedPin.current = pin;
+                    fetchPincodeDetails(pin);
+                  }
                 }}
                 placeholder="Enter buyer's pincode"
                 className="bg-[#1a222c] px-2 py-1 rounded-lg placeholder:text-sm w-full min-w-60 border-[#3b4f68] border mt-2"

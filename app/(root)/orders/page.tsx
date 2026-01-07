@@ -1,87 +1,189 @@
+// "use client";
+// import Link from "next/link";
+// import React, { useEffect, useState } from "react";
+// import OrderCard from "@/app/(root)/orders/create_order/(components)/OrderCard";
+// import { Filter, Search } from "lucide-react";
+// import ReactPaginate from "react-paginate";
+// import { useRouter, useSearchParams } from "next/navigation";
+// import DateRangePicker from "./create_order/(components)/DateRangePicker";
+// import FilterSidebar from "./create_order/(components)/FilterSidebar";
+
+// const Page = () => {
+//   const [orders, setOrders] = useState<any[]>([]);
+//   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("desc");
+//   const [showFilter, setShowFilter] = useState(false);
+//   const [orderid, setOrderId] = useState<string>("");
+//   const [totalPages, setTotalPages] = useState(1);
+//   const [paymentType, setPaymentType] = useState({
+//     prepaid: false,
+//     cod: false,
+//   });
+//   const [filters, setFilters] = useState({
+//     tag: "",
+//     hsn: "",
+//     sku: "",
+//   });
+
+//   const [draftFilters, setDraftFilters] = useState(filters);
+
+//   const [dateRange, setDateRange] = useState<{
+//     from: string | null;
+//     to: string | null;
+//   }>({
+//     from: null,
+//     to: null,
+//   });
+
+//   const router = useRouter();
+//   const searchParams = useSearchParams();
+
+//   const initialPage = Number(searchParams.get("page") || 1);
+//   const [page, setPage] = useState(initialPage);
+
+//   const fetchOrders = async (
+//     orderid: string = "",
+//     activeFilters = filters,
+//     range = dateRange,
+//     pageNumber = page
+//   ) => {
+//     try {
+//       const params = new URLSearchParams();
+
+//       if (orderid.trim()) params.set("id", orderid);
+//       params.set("page", String(pageNumber));
+
+//       if (range.from) params.set("from", range.from);
+//       if (range.to) params.set("to", range.to);
+//       if (paymentType.prepaid && !paymentType.cod)
+//         params.set("payment", "prepaid");
+//       if (!paymentType.prepaid && paymentType.cod) params.set("payment", "cod");
+//       if (activeFilters.tag) params.set("tag", activeFilters.tag);
+//       if (activeFilters.hsn) params.set("hsn", activeFilters.hsn);
+//       if (activeFilters.sku) params.set("sku", activeFilters.sku);
+
+//       const res = await fetch(`/api/orders/fetch-order?${params.toString()}`, {
+//         cache: "no-store",
+//       });
+
+//       const data = await res.json();
+//       setOrders(data.orders || []);
+//       setTotalPages(data.pagination.totalPages);
+//     } catch (err) {
+//       console.error(err);
+//     }
+//   };
+
+//   const handleDeleteOrder = (orderId: number) => {
+//     setOrders((prevOrders) =>
+//       prevOrders.filter((order) => order.id !== orderId)
+//     );
+//   };
+
+//   const sortedOrders = React.useMemo(() => {
+//     if (!sortOrder) return orders;
+
+//     return [...orders].sort((a, b) => {
+//       const dateA = new Date(a.createdAt).getTime();
+//       const dateB = new Date(b.createdAt).getTime();
+
+//       return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+//     });
+//   }, [orders, sortOrder]);
+
+//   useEffect(() => {
+//     const params = new URLSearchParams();
+
+//     params.set("page", String(page));
+//     if (dateRange.from) params.set("from", dateRange.from);
+//     if (dateRange.to) params.set("to", dateRange.to);
+//     if (orderid) params.set("id", orderid);
+//     if (paymentType.prepaid && !paymentType.cod)
+//       params.set("payment", "prepaid");
+//     if (!paymentType.prepaid && paymentType.cod) params.set("payment", "cod");
+//     if (filters.tag) params.set("tag", filters.tag);
+//     if (filters.hsn) params.set("hsn", filters.hsn);
+//     if (filters.sku) params.set("sku", filters.sku);
+//     router.replace(`?${params.toString()}`, { scroll: false });
+//     fetchOrders(orderid, filters, dateRange, page);
+//   }, [page, orderid, dateRange.from, dateRange.to, paymentType, filters]);
+
 "use client";
+
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import OrderCard from "@/app/(root)/orders/create_order/(components)/OrderCard";
-import { Filter, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import ReactPaginate from "react-paginate";
 import { useRouter, useSearchParams } from "next/navigation";
-import DateRangePicker from "./create_order/(components)/DateRangePicker";
 import FilterSidebar from "./create_order/(components)/FilterSidebar";
 
-const Page = () => {
+export default function Page() {
   const [orders, setOrders] = useState<any[]>([]);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("desc");
-  const [showFilter, setShowFilter] = useState(false);
-  const [orderid, setOrderId] = useState<string>("");
+  const [orderid, setOrderId] = useState("");
   const [totalPages, setTotalPages] = useState(1);
-  const [dateRange, setDateRange] = useState<{
-    from: string | null;
-    to: string | null;
-  }>({
+
+    const handleDeleteOrder = (orderId: number) => {
+    setOrders((prevOrders) =>
+      prevOrders.filter((order) => order.id !== orderId)
+    );
+  };
+
+  // ✅ applied filters
+  const [paymentType, setPaymentType] = useState({ prepaid: false, cod: false });
+  const [filters, setFilters] = useState({ tag: "", hsn: "", sku: "" });
+
+  // ✅ draft filters (sidebar)
+  const [draftPaymentType, setDraftPaymentType] = useState(paymentType);
+  const [draftFilters, setDraftFilters] = useState(filters);
+
+  const [dateRange, setDateRange] = useState<{ from: string | null; to: string | null }>({
     from: null,
     to: null,
   });
 
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const initialPage = Number(searchParams.get("page") || 1);
-  const [page, setPage] = useState(initialPage);
+  const [page, setPage] = useState(Number(searchParams.get("page") || 1));
 
   const fetchOrders = async (
-    orderid: string = "",
+    orderid = "",
+    activeFilters = filters,
     range = dateRange,
-    pageNumber = page
+    pageNumber = page,
+    activePayment = paymentType
   ) => {
-    try {
-      const params = new URLSearchParams();
+    const params = new URLSearchParams();
+    if (orderid) params.set("id", orderid);
+    params.set("page", String(pageNumber));
+    if (range.from) params.set("from", range.from);
+    if (range.to) params.set("to", range.to);
 
-      if (orderid.trim()) params.set("id", orderid);
-      params.set("page", String(pageNumber));
+    if (activePayment.prepaid && !activePayment.cod) params.set("payment", "prepaid");
+    if (!activePayment.prepaid && activePayment.cod) params.set("payment", "cod");
 
-      if (range.from) params.set("from", range.from);
-      if (range.to) params.set("to", range.to);
+    if (activeFilters.tag) params.set("tag", activeFilters.tag);
+    if (activeFilters.hsn) params.set("hsn", activeFilters.hsn);
+    if (activeFilters.sku) params.set("sku", activeFilters.sku);
 
-      const res = await fetch(`/api/orders/fetch-order?${params.toString()}`, {
-        cache: "no-store",
-      });
-
-      const data = await res.json();
-      setOrders(data.orders || []);
-      setTotalPages(data.pagination.totalPages);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await fetch(`/api/orders/fetch-order?${params.toString()}`, { cache: "no-store" });
+    const data = await res.json();
+    setOrders(data.orders || []);
+    setTotalPages(data?.pagination?.totalPages || 1);
   };
-
-  const handleDeleteOrder = (orderId: number) => {
-    setOrders((prevOrders) =>
-      prevOrders.filter((order) => order.id !== orderId)
-    );
-  };
-
-  const sortedOrders = React.useMemo(() => {
-    if (!sortOrder) return orders;
-
-    return [...orders].sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-
-      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
-    });
-  }, [orders, sortOrder]);
 
   useEffect(() => {
-    const params = new URLSearchParams();
+    fetchOrders(orderid, filters, dateRange, page, paymentType);
+  }, [page, orderid, filters, dateRange.from, dateRange.to, paymentType]);
 
-    params.set("page", String(page));
-    if (dateRange.from) params.set("from", dateRange.from);
-    if (dateRange.to) params.set("to", dateRange.to);
-    if (orderid) params.set("id", orderid);
-
-    router.replace(`?${params.toString()}`, { scroll: false });
-    fetchOrders(orderid, dateRange, page);
-  }, [page, orderid, dateRange.from, dateRange.to]);
+  const sortedOrders = useMemo(() => {
+    if (!sortOrder) return orders;
+    return [...orders].sort((a, b) =>
+      sortOrder === "asc"
+        ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [orders, sortOrder]);
 
   return (
     <div className="font-poppins text-white p-4">
@@ -127,14 +229,20 @@ const Page = () => {
           <span>Filter</span>
         </button> */}
         <FilterSidebar
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-          onApply={(range) => {
-            setPage(1);
-            setDateRange(range);
-            fetchOrders(orderid, range, 1);
-          }}
-        />
+  draftFilters={draftFilters}
+  setDraftFilters={setDraftFilters}
+  draftPaymentType={draftPaymentType}
+  setDraftPaymentType={setDraftPaymentType}
+  sortOrder={sortOrder}
+  setSortOrder={setSortOrder}
+  onApply={(range) => {
+    setFilters(draftFilters);              // APPLY product filters
+    setPaymentType(draftPaymentType);     // APPLY payment filters
+    setPage(1);
+    setDateRange(range);
+    fetchOrders(orderid, draftFilters, range, 1);
+  }}
+/>
 
         {/* {showFilter && (
           <div className="absolute top-12 right-0 w-52 bg-[#1f2b3a] text-white rounded-lg shadow-lg border border-[#38495e] overflow-hidden z-10">
@@ -180,9 +288,7 @@ const Page = () => {
         <div className="col-span-1">Action</div>
       </div>
       <div className="lg:hidden w-full bg-blue-600 text-white rounded-lg  grid-cols-10 gap-4 p-4 items-center text-sm mt-4 font-medium">
-        <h1>
-          Orders
-        </h1>
+        <h1>Orders</h1>
       </div>
 
       {/* Orders List */}
@@ -225,4 +331,3 @@ const Page = () => {
   );
 };
 
-export default Page;

@@ -19,14 +19,13 @@ export async function DELETE(req: NextRequest) {
     const order = await prisma.order.findFirst({
       where: {
         id: Number(orderId),
-        userId: decoded.userId, // 🔐 user can delete only own orders
+        userId: decoded.userId, 
       },
     });
 
     if (!order)
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
 
-    // delete child records first (FK safe)
     await prisma.orderProduct.deleteMany({
       where: { orderId: order.id },
     });

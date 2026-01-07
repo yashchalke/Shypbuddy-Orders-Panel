@@ -5,11 +5,30 @@ import DateRangePicker from "./DateRangePicker";
 
 type Props = {
   onApply: (range: { from: string | null; to: string | null }) => void;
+
   sortOrder: "asc" | "desc" | null;
   setSortOrder: React.Dispatch<React.SetStateAction<"asc" | "desc" | null>>;
+
+  draftPaymentType: { prepaid: boolean; cod: boolean };
+  setDraftPaymentType: React.Dispatch<
+    React.SetStateAction<{ prepaid: boolean; cod: boolean }>
+  >;
+
+  draftFilters: { tag: string; hsn: string; sku: string };
+  setDraftFilters: React.Dispatch<
+    React.SetStateAction<{ tag: string; hsn: string; sku: string }>
+  >;
 };
 
-export default function FilterSidebar({ onApply,sortOrder, setSortOrder }: Props) {
+export default function FilterSidebar({
+  onApply,
+  sortOrder,
+  setSortOrder,
+  draftPaymentType,
+  setDraftPaymentType,
+  draftFilters,
+  setDraftFilters,
+}: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,42 +59,115 @@ export default function FilterSidebar({ onApply,sortOrder, setSortOrder }: Props
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 overflow-y-auto h-[calc(100vh-80px)]">
+          <DateRangePicker
+            onApply={(range) => {
+              onApply(range);
+              setOpen(false);
+            }}
+          />
 
-  <DateRangePicker
-    onApply={(range) => {
-      onApply(range);
-      setOpen(false);
-    }}
-  />
+          {/* Sort */}
+          <div className="border border-[#38495e] rounded-lg">
+            <h1 className="p-4">Sort by</h1>
+            <label className="flex items-center gap-2 px-4 py-2">
+              <input
+                type="checkbox"
+                checked={sortOrder === "asc"}
+                onChange={() =>
+                  setSortOrder((p) => (p === "asc" ? null : "asc"))
+                }
+              />
+              Date Ascending
+            </label>
+            <label className="flex items-center gap-2 px-4 py-2">
+              <input
+                type="checkbox"
+                checked={sortOrder === "desc"}
+                onChange={() =>
+                  setSortOrder((p) => (p === "desc" ? null : "desc"))
+                }
+              />
+              Date Descending
+            </label>
+          </div>
 
-  {/* Sort Filter */}
-  <div className="bg-[#1f2b3a] rounded-lg border border-[#38495e] overflow-hidden">
-    <h1 className="p-4">Sort by</h1>
-    <label className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-[#2b394b]">
-      <input
-        type="checkbox"
-        checked={sortOrder === "asc"}
-        onChange={() =>
-          setSortOrder((prev) => (prev === "asc" ? null : "asc"))
-        }
-      />
-      <span>Date Ascending</span>
-    </label>
+          {/* Payment */}
+          <div>
+            <h2 className="text-sm mb-2">Payment Type</h2>
 
-    <label className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-[#2b394b]">
-      <input
-        type="checkbox"
-        checked={sortOrder === "desc"}
-        onChange={() =>
-          setSortOrder((prev) => (prev === "desc" ? null : "desc"))
-        }
-      />
-      <span>Date Descending</span>
-    </label>
-  </div>
-</div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={draftPaymentType.prepaid}
+                onChange={(e) =>
+                  setDraftPaymentType((p) => ({
+                    ...p,
+                    prepaid: e.target.checked,
+                  }))
+                }
+              />
+              Prepaid
+            </label>
 
+            <label className="flex items-center gap-2 mt-2">
+              <input
+                type="checkbox"
+                checked={draftPaymentType.cod}
+                onChange={(e) =>
+                  setDraftPaymentType((p) => ({
+                    ...p,
+                    cod: e.target.checked,
+                  }))
+                }
+              />
+              COD
+            </label>
+          </div>
+
+          {/* Product Filters */}
+          <div>
+            <h2 className="text-sm mb-2">Product Filters</h2>
+
+            <input
+              placeholder="Tag"
+              value={draftFilters.tag}
+              onChange={(e) =>
+                setDraftFilters((p) => ({ ...p, tag: e.target.value }))
+              }
+              className="w-full bg-[#2b394b] px-2 py-1 rounded border border-[#3b4f68]"
+            />
+
+            <input
+              placeholder="HSN"
+              value={draftFilters.hsn}
+              onChange={(e) =>
+                setDraftFilters((p) => ({ ...p, hsn: e.target.value }))
+              }
+              className="w-full mt-2 bg-[#2b394b] px-2 py-1 rounded border border-[#3b4f68]"
+            />
+
+            <input
+              placeholder="SKU"
+              value={draftFilters.sku}
+              onChange={(e) =>
+                setDraftFilters((p) => ({ ...p, sku: e.target.value }))
+              }
+              className="w-full mt-2 bg-[#2b394b] px-2 py-1 rounded border border-[#3b4f68]"
+            />
+          </div>
+          <div className="p-4 space-x-4">
+            <button
+              onClick={() => {
+                onApply({ from: null, to: null }); // dateRange already in parent state
+                setOpen(false);
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg mt-4"
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
       </div>
     </>
   );
