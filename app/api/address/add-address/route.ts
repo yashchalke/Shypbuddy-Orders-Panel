@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { date } from "zod";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,10 +22,17 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
+    const generateuniquecode =():string =>{
+      return `Shypb_${decoded.userId}_${Date.now()}`
+    }
+
+    const uniquecode:string = `Shypb_${decoded.userId}_${Date.now()}`
+
     const newAddress = await prisma.address.create({
       data: {
         userId: decoded.userId,   
         tag: body.tag,
+        code:generateuniquecode(),
         phone: body.phone,
         address: body.address,
         landmark: body.landmark,

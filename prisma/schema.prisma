@@ -65,6 +65,7 @@ model Address {
   id        Int    @id @default(autoincrement())
   userId    Int
   user      User   @relation(fields: [userId], references: [id])
+  code      String @unique
 
   tag       String
   phone     String
@@ -77,6 +78,8 @@ model Address {
 
   shippingOrders Order[] @relation("ShippingAddress")
   rtoOrders      Order[] @relation("RTOAddress")
+  // courierMappings CourierAddressMap[]
+
 
   @@unique([userId, tag])
 }
@@ -103,6 +106,8 @@ model Order {
   //applicable weight
   id              Int    @id @default(autoincrement())
   orderNo         Int    @default(autoincrement())
+  awb_number      String?
+  delhivery_partner String?
   userId          Int
   user            User   @relation(fields: [userId], references: [id])
 
@@ -146,6 +151,15 @@ model OrderProduct {
   unitPrice  Float
   totalPrice Float
 }
+
+// model CourierAddressMap{
+//   id  Int @id @default(autoincrement())
+//   addressId Int
+//   courier String
+//   courierWarehouseCode String
+//   address Address @relation(fields: [addressId],references: [id])
+//   @@unique([addressId,courier])
+// }
 
 enum PaymentMethod {
   PREPAID

@@ -38,6 +38,7 @@ const AddressForm = () => {
   const [open, setOpen] = useState<boolean>(false);
   const [tag, settag] = useState("");
   const [phone, setphone] = useState("");
+  // const [userId,setUserId] = useState("");
   const [address, setaddress] = useState("");
   const [landmark, setlandmark] = useState("");
   const [pincode, setpincode] = useState("");
@@ -46,6 +47,7 @@ const AddressForm = () => {
   const [country, setcountry] = useState("India");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [code,setcode] = useState(0);
 
   const validateSingleField = (key: string, value: string) => {
     const partial = AddressSchema.pick({ [key]: true } as any);
@@ -90,6 +92,7 @@ const AddressForm = () => {
 
     const formData = {
       tag,
+      code,
       phone,
       address,
       landmark,
@@ -113,6 +116,7 @@ const AddressForm = () => {
 
     setErrors({});
 
+    
     try {
       const res = await fetch("/api/address/add-address", {
         method: "POST",
@@ -124,6 +128,7 @@ const AddressForm = () => {
 
       if (res.ok) {
         toast.success("Address Added Successfully");
+        
         ResetForm();
       }
       else{
