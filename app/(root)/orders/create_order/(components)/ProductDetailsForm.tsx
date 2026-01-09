@@ -376,7 +376,7 @@ const ProductDetailsForm = ({ value, onChange }: FormProps) => {
             <input
               value={quantity}
               onChange={(e) => {
-                setquantity(e.target.value);
+                setquantity(e.target.value.replace(/[^0-9]/g, ""));
                 validateField("quantity", e.target.value);
               }}
               className="bg-[#1a222c] px-2 py-1 rounded-lg w-full min-w-60 border-[#3b4f68] border mt-2"

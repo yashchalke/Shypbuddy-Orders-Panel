@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
-
 
 export async function POST(req: NextRequest) {
   try {
     const { orderId } = await req.json();
+
+    if (!orderId)
+      return NextResponse.json({ success: false, message: "Order ID required" }, { status: 400 });
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -16,7 +17,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    if (!order) return NextResponse.json({ success:false, message:"Order not found" },{status:404});
+    if (!order)
+      return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 });
 
     const payload = {
       shipments: [
@@ -31,6 +33,7 @@ export async function POST(req: NextRequest) {
 
           order: String(order.id),
           payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
+
           return_pin: order.address.pincode,
           return_city: order.address.city,
           return_phone: order.address.phone,
@@ -43,7 +46,7 @@ export async function POST(req: NextRequest) {
           order_date: new Date().toISOString().split("T")[0],
 
           total_amount: order.totalOrderValue,
-          quantity: order.products.reduce((s,p)=>s+p.quantity,0),
+          quantity: order.products.reduce((s, p) => s + p.quantity, 0),
 
           seller_add: order.address.code,
           seller_name: order.address.tag,
@@ -59,25 +62,44 @@ export async function POST(req: NextRequest) {
     };
 
     const formBody = new URLSearchParams();
-    formBody.append("format","json");
+    formBody.append("format", "json");
     formBody.append("data", JSON.stringify(payload));
 
-    const res = await fetch("https://staging-express.delhivery.com/api/cmu/create.json",{
-      method:"POST",
-      headers:{
-        Authorization:`Token ${process.env.DELHIVERY_API_KEY}`,
-        Accept:"application/json",
-        "Content-Type":"application/x-www-form-urlencoded"
+    const res = await fetch("https://staging-express.delhivery.com/api/cmu/create.json", {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${process.env.DELHIVERY_API_KEY}`,
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded"
       },
       body: formBody.toString()
     });
 
-    const data = await res.json();
+    const delhivery = await res.json();
 
-    return NextResponse.json({ success:true, delhivery:data });
+    const waybill =
+      delhivery?.packages?.[0]?.waybill ||
+      delhivery?.waybills?.[0];
 
-  } catch(err:any){
-    console.error(err);
-    return NextResponse.json({ success:false, message:"Shipment creation failed"},{status:400});
+    if (!waybill)
+      return NextResponse.json({ success: false, message: "Waybill not generated" }, { status: 400 });
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        awb_number: waybill,
+        status: "READY_TO_SHIP"
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Shipment created successfully",
+      awb: waybill
+    });
+
+  } catch (err) {
+    console.error("Shipment Error:", err);
+    return NextResponse.json({ success: false, message: "Shipment creation failed" }, { status: 400 });
   }
 }

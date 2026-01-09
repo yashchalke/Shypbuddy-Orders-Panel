@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get("query");
     const id = searchParams.get("id");
 
-    // 🆕 Fetch single address by id (edit mode)
     if (id) {
       const address = await prisma.address.findFirst({
         where: {
@@ -26,7 +25,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(address);
     }
 
-    // 🔍 Normal search mode
     const addresses = await prisma.address.findMany({
       where: {
         userId: decoded.userId,

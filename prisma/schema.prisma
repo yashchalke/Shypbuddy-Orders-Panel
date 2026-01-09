@@ -106,7 +106,7 @@ model Order {
   //applicable weight
   id              Int    @id @default(autoincrement())
   orderNo         Int    @default(autoincrement())
-  awb_number      String?
+  awb_number      String? 
   delhivery_partner String?
   userId          Int
   user            User   @relation(fields: [userId], references: [id])
@@ -131,7 +131,7 @@ model Order {
   products        OrderProduct[]
   paymentMethod   PaymentMethod
   totalOrderValue Float
-  status          OrderStatus @default(PENDING)
+  status          OrderStatus @default(NEW)
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -168,6 +168,7 @@ enum PaymentMethod {
 
 enum OrderStatus {
   NEW 
+  READY_TO_SHIP
   PENDING
   CONFIRMED
   PICKED

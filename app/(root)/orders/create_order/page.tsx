@@ -1,7 +1,8 @@
 "use client";
 import { redirect, useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import Pickupform from "./(components)/Pickupform";
+// import Pickupform from "./(components)/Pickupform";
+import Pickupform_updated from "./(components)/Pickupform_updated";
 import BuyersDetailsForm from "./(components)/BuyersDetailsForm";
 import ProductDetailsForm from "./(components)/ProductDetailsForm";
 import PackageDetails from "./(components)/PackageDetails";
@@ -9,7 +10,6 @@ import LastForm from "./(components)/LastForm";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { useSearchParams } from "next/navigation";
-
 
 type ShipmentSection = "pickup" | "buyer" | "product" | "package";
 
@@ -23,15 +23,8 @@ type ShipmentData = {
   package: Record<string, any>;
 };
 
-// type ValidationErrors = {
-//   pickup: string[];
-//   buyer: string[];
-//   product: string[];
-//   package: string[];
-// };
-
 const page = () => {
-  const router = useRouter()
+  const router = useRouter();
   const [dangerousGoods, setDangerousGoods] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<"PREPAID" | "COD">(
     "PREPAID"
@@ -48,78 +41,11 @@ const page = () => {
   const searchParams = useSearchParams();
   const editOrderId = searchParams.get("orderId");
   const isEditMode = Boolean(editOrderId);
-  // const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
-  //   pickup: [],
-  //   buyer: [],
-  //   product: [],
-  //   package: [],
-  // });
-
-  // const buyersSchema = z.object({
-  //   buyersname: z.string().min(2, "Buyer's name must be at least 2 characters"),
-  //   buyersnumber: z.string().regex(/^\d{10}$/, "Buyer's phone number must be 10 digits"),
-  //   alternatenumber: z
-  //     .string()
-  //     .regex(/^\d{10}$/, "Alternate number must be 10 digits")
-  //     .optional()
-  //     .or(z.literal("")),
-  //   email: z.string().email("Invalid buyer email address"),
-  //   orderno: z.string().min(3, "Order number is too short"),
-  //   address: z.string().min(5, "Buyer's address is too short"),
-  //   pincode: z.string().regex(/^\d{6}$/, "Buyer's pincode must be 6 digits"),
-  //   landmark: z.string().min(2, "Landmark is required"),
-  //   city: z.string().min(2, "City is required"),
-  //   state: z.string().min(2, "State is required"),
-  //   country: z.string().min(2, "Country is required"),
-  // });
-
-  // const packageSchema = z.object({
-  //   length: z
-  //     .number()
-  //     .gt(0.5, "Length must be greater than 0.5 cm")
-  //     .refine((val) => val !== undefined && val !== null, {
-  //       message: "Package length is required",
-  //     }),
-  //   breadth: z
-  //     .number()
-  //     .gt(0.5, "Breadth must be greater than 0.5 cm")
-  //     .refine((val) => val !== undefined && val !== null, {
-  //       message: "Package breadth is required",
-  //     }),
-  //   height: z
-  //     .number()
-  //     .gt(0.5, "Height must be greater than 0.5 cm")
-  //     .refine((val) => val !== undefined && val !== null, {
-  //       message: "Package height is required",
-  //     }),
-  //   weight: z
-  //     .number()
-  //     .positive("Weight must be positive")
-  //     .refine((val) => val !== undefined && val !== null, {
-  //       message: "Package weight is required",
-  //     }),
-  // });
-
-  // const productSchema = z.object({
-  //   name: z.string().min(2, "Product name is required"),
-  //   category: z.string().min(2, "Product category is required"),
-  //   sku: z.string().min(2, "Product SKU is required"),
-  //   hsn: z.string().min(4, "HSN code is invalid"),
-  //   quantity: z.string().regex(/^\d+$/, "Quantity must be a number"),
-  //   price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter valid product price"),
-  // });
-
   const updateformdata = (section: ShipmentSection, data: any) => {
     setshipmentdata((prev) => ({
       ...prev,
       [section]: section === "product" ? data : { ...prev[section], ...data },
     }));
-
-    // Clear validation errors for this section when data is updated
-    // setValidationErrors((prev) => ({
-    //   ...prev,
-    //   [section]: [],
-    // }));
   };
 
   const fetchOrderById = async (orderId: string) => {
@@ -184,102 +110,6 @@ const page = () => {
     }
   }, [editOrderId]);
 
-  console.log(shipmentdata);
-
-  // Get all missing fields and validation errors
-  // const getMissingFields = (): { errors: ValidationErrors; allErrors: string[] } => {
-  //   const errors: ValidationErrors = {
-  //     pickup: [],
-  //     buyer: [],
-  //     product: [],
-  //     package: [],
-  //   };
-  //   const allErrors: string[] = [];
-
-  //   // Validate pickup addresses
-  //   if (!shipmentdata.pickup.addressId) {
-  //     errors.pickup.push("Pickup address is required");
-  //     allErrors.push("Pickup address is required");
-  //   }
-  //   if (!shipmentdata.pickup.rtoAddressId) {
-  //     errors.pickup.push("RTO address is required");
-  //     allErrors.push("RTO address is required");
-  //   }
-
-  //   // Validate buyer details
-  //   if (Object.keys(shipmentdata.buyer).length === 0) {
-  //     errors.buyer.push("Buyer details are required");
-  //     allErrors.push("Buyer details are required");
-  //   } else {
-  //     try {
-  //       buyersSchema.parse(shipmentdata.buyer);
-  //     } catch (error) {
-  //       if (error instanceof z.ZodError) {
-  //         error.issues.forEach((err) => {
-  //           errors.buyer.push(err.message);
-  //           allErrors.push(err.message);
-  //         });
-  //       }
-  //     }
-  //   }
-
-  //   // Validate products
-  //   if (!shipmentdata.product || shipmentdata.product.length === 0) {
-  //     errors.product.push("At least one product is required");
-  //     allErrors.push("At least one product is required");
-  //   } else {
-  //     shipmentdata.product.forEach((product, index) => {
-  //       try {
-  //         productSchema.parse(product);
-  //       } catch (error) {
-  //         if (error instanceof z.ZodError) {
-  //           error.issues.forEach((err) => {
-  //             const errorMsg = `Product ${index + 1}: ${err.message}`;
-  //             errors.product.push(errorMsg);
-  //             allErrors.push(errorMsg);
-  //           });
-  //         }
-  //       }
-  //     });
-  //   }
-
-  //   // Validate package details
-  //   if (Object.keys(shipmentdata.package).length === 0) {
-  //     errors.package.push("Package dimensions are required");
-  //     allErrors.push("Package dimensions are required");
-  //   } else {
-  //     try {
-  //       packageSchema.parse(shipmentdata.package);
-  //     } catch (error) {
-  //       if (error instanceof z.ZodError) {
-  //         error.issues.forEach((err) => {
-  //           errors.package.push(err.message);
-  //           allErrors.push(err.message);
-  //         });
-  //       }
-  //     }
-  //   }
-
-  //   return { errors, allErrors };
-  // };
-
-  // // Show all errors as toasts
-  // const showValidationErrors = (allErrors: string[]) => {
-  //   // Show first 3 errors to avoid toast spam
-  //   const errorsToShow = allErrors.slice(0, 3);
-  //   errorsToShow.forEach((error, index) => {
-  //     setTimeout(() => {
-  //       toast.error(error);
-  //     }, index * 300);
-  //   });
-
-  //   if (allErrors.length > 3) {
-  //     setTimeout(() => {
-  //       toast.error(`And ${allErrors.length - 3} more errors...`);
-  //     }, 900);
-  //   }
-  // };
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -313,37 +143,45 @@ const page = () => {
       );
 
       setTimeout(() => {
-        redirect('/orders')
+        redirect("/orders");
       }, 400);
     } catch (err: any) {
       toast.error(err.message);
     }
   };
 
-  console.log(shipmentdata);
+  const handleShip = async () => {
+    const payload = {
+      addressId: shipmentdata.pickup.addressId,
+      rtoAddressId: shipmentdata.pickup.rtoAddressId,
+      buyer: shipmentdata.buyer,
+      shipment: shipmentdata.package,
+      products: shipmentdata.product,
+      dangerousGoods,
+      paymentMethod,
+    };
+    try {
+      const res = await fetch("/api/shipment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Failed to ship order");
+
+      toast.success("Shipment created successfully!");
+      router.push("/orders");
+    } catch (err: any) {
+      toast.error(err.message || "Shipment failed");
+    }
+  };
 
   const totalordervalue = shipmentdata.product.reduce(
-  (sum, item) => sum + item.unitPrice * item.quantity,
-  0
-);
-
-
-  // Helper component to show section errors
-  // const SectionErrors = ({ errors }: { errors: string[] }) => {
-  //   if (errors.length === 0) return null;
-  //   return (
-  //     <div className="mt-2 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
-  //       <ul className="text-red-400 text-sm space-y-1">
-  //         {errors.map((error, index) => (
-  //           <li key={index} className="flex items-start gap-2">
-  //             <span className="text-red-500">•</span>
-  //             {error}
-  //           </li>
-  //         ))}
-  //       </ul>
-  //     </div>
-  //   );
-  // };
+    (sum, item) => sum + item.unitPrice * item.quantity,
+    0
+  );
 
   return (
     <div className="p-4 md:p-10 font-poppins text-white">
@@ -355,7 +193,7 @@ const page = () => {
         </div>
         <div className="p-6">
           <div>
-            <Pickupform
+            <Pickupform_updated
               value={shipmentdata.pickup}
               onChange={(data: any) => updateformdata("pickup", data)}
             />
@@ -455,6 +293,16 @@ const page = () => {
                   <h1>₹{totalordervalue.toFixed(2)}</h1>
                 </div>
                 <div className="flex gap-4 mt-4 justify-end">
+                  {!isEditMode && (
+                    <button
+                      type="button"
+                      className="bg-purple-500 px-4 py-2 rounded-lg hover:bg-purple-600"
+                      onClick={handleShip}
+                    >
+                      Ship
+                    </button>
+                  )}
+
                   <button
                     type="submit"
                     className="bg-green-500 px-4 py-2 rounded-lg"
@@ -464,6 +312,7 @@ const page = () => {
                   <button
                     type="button"
                     className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600"
+                    onClick={() => router.push("/orders")}
                   >
                     Cancel
                   </button>
