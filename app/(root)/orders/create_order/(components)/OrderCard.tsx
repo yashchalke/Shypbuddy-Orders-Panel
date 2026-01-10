@@ -92,7 +92,6 @@ const OrderCard = ({ order, onDelete, onUpdate }: Props) => {
 
         <div className="col-span-1">
           <span className="text-white font-medium">
-            {" "}
             {order.awb_number ? `${order.awb_number}` : `Null`}
           </span>
         </div>

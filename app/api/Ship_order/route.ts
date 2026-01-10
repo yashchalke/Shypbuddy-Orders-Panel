@@ -187,6 +187,7 @@
 //         id: orderId,
 //         awb_number: waybill,
 //         status: "READY_TO_SHIP",
+//         delhivery_partner: "delhivery"
 //       },
 //     });
 //   } catch (err) {
@@ -197,6 +198,10 @@
 //     );
 //   }
 // }
+
+
+
+
 
 import { NextRequest, NextResponse } from "next/server";
 import { shipOrderFlow } from "@/actions/ship-order";

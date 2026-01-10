@@ -26,7 +26,8 @@ export async function shipOrderFlow(orderId: number) {
     order: {
       id: orderId,
       awb_number:shipment.awb,
-      status: "READY_TO_SHIP"
+      status: "READY_TO_SHIP",
+      delhivery_partner:"delhivery"
     }
 }
 }
