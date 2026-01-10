@@ -29,6 +29,8 @@ const page = () => {
   const [paymentMethod, setPaymentMethod] = useState<"PREPAID" | "COD">(
     "PREPAID"
   );
+  const [isShipping, setIsShipping] = useState(false);
+
   const [shipmentdata, setshipmentdata] = useState<ShipmentData>({
     pickup: {
       addressId: null,
@@ -151,6 +153,8 @@ const page = () => {
   };
 
   const handleShip = async () => {
+    if (isShipping) return;
+
     const payload = {
       addressId: shipmentdata.pickup.addressId,
       rtoAddressId: shipmentdata.pickup.rtoAddressId,
@@ -161,6 +165,7 @@ const page = () => {
       paymentMethod,
     };
     try {
+      setIsShipping(true);
       const res = await fetch("/api/shipment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -169,12 +174,17 @@ const page = () => {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Failed to ship order");
+      if (!res.ok || !data.success) {
+        toast.error(data.message || "Order Saved but failed to ship");
+        router.push("/orders");
+        return;
+      }
 
       toast.success("Shipment created successfully!");
       router.push("/orders");
     } catch (err: any) {
-      toast.error(err.message || "Shipment failed");
+      toast.error(err.message || "Something went wrong");
+      router.push("/orders");
     }
   };
 
@@ -296,10 +306,17 @@ const page = () => {
                   {!isEditMode && (
                     <button
                       type="button"
-                      className="bg-purple-500 px-4 py-2 rounded-lg hover:bg-purple-600"
+                      disabled={isShipping}
+                      className={`px-4 py-2 rounded-lg transition-colors
+    ${
+      isShipping
+        ? "bg-gray-500 cursor-not-allowed opacity-60"
+        : "bg-purple-500 hover:bg-purple-600"
+    }
+  `}
                       onClick={handleShip}
                     >
-                      Ship
+                      {isShipping ? "Shipping..." : "Ship"}
                     </button>
                   )}
 

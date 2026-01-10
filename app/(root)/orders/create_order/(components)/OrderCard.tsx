@@ -3,21 +3,27 @@ import toast from "react-hot-toast";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DeleteOrderDialog from "./DeleteOrderDialog";
+import { cancelShipment } from "@/actions/CancelOrder";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { shipOrderFlow } from "@/actions/ship-order";
 
 type Props = {
   order: any;
   onDelete?: (orderId: number) => void;
+  onUpdate: (order: any) => void;
 };
 
-const OrderCard = ({ order, onDelete }: Props) => {
+const OrderCard = ({ order, onDelete, onUpdate }: Props) => {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
+  const [openMenu, setOpenMenu] = useState<number | null>(null);
+  const [shippingId, setShippingId] = useState<number | null>(null);
+  const canShip = !order.awb_number && order.status === "NEW";
 
   const handleDelete = async () => {
     try {
@@ -40,29 +46,79 @@ const OrderCard = ({ order, onDelete }: Props) => {
     }
   };
 
+  const handleCancelOrder = async () => {
+    const res = await cancelShipment(order.id);
+
+    if (res.success != true) {
+      toast.error(res.message);
+      return;
+    }
+    onUpdate(res.order);
+    toast.success(res.message);
+  };
+
+  const handleship = async (id: number) => {
+    if (shippingId) return; 
+
+    try {
+      setShippingId(id);
+
+      const res = await fetch("/api/Ship_order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: id }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Failed to create shipment");
+
+      toast.success(data.message || "Shipment Created Successfully");
+      onUpdate(data.order);
+    } catch (err: any) {
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setShippingId(null);
+    }
+  };
+
   return (
     <>
       {/* Old code */}
       <div className="hidden xl:grid w-full bg-[#334458] rounded-lg grid-cols-10 gap-4 p-4 items-center text-sm">
-        
         <div className="col-span-1">
-          <span className="text-white font-medium">#{order.id}</span>
+          <span>#{order.id}</span>
+        </div>
+
+        <div className="col-span-1">
+          <span className="text-white font-medium">
+            {" "}
+            {order.awb_number ? `${order.awb_number}` : `Null`}
+          </span>
         </div>
 
         <div className="col-span-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-white font-medium cursor-pointer underline decoration-dotted">
-                package<br /> details
+                package
+                <br /> details
               </span>
             </TooltipTrigger>
 
             <TooltipContent className="bg-[#1f2b3a] border border-[#38495e] text-white p-3 rounded-lg shadow-lg">
               <div className="text-xs space-y-2 min-w-[180px]">
+                {order.length}x{order.breadth}x{order.height}
+                <span className="text-gray-400 text-xs ml-1">
+                  ({order.applicableWeight}kg)
+                </span>
                 <p className="font-semibold text-sm mb-1">Products</p>
                 {order.products.map((item: any, index: number) => (
                   <div key={index} className="flex justify-between gap-4">
-                    <span className="truncate max-w-[90px]">{item.product.name}</span>
+                    <span className="truncate max-w-[90px]">
+                      {item.product.name}
+                    </span>
+
                     <span>× {item.quantity}</span>
                     <span>₹{item.unitPrice}</span>
                   </div>
@@ -81,12 +137,7 @@ const OrderCard = ({ order, onDelete }: Props) => {
         </div>
 
         <div className="col-span-1">
-          <span className="text-white">
-            {order.length}x{order.breadth}x{order.height}
-          </span>
-          <span className="text-gray-400 text-xs ml-1">
-            ({order.applicableWeight}kg)
-          </span>
+          <span>{order.delhivery_partner || "Delivery Partner not selected"}</span>
         </div>
 
         <div className="col-span-1">
@@ -104,9 +155,6 @@ const OrderCard = ({ order, onDelete }: Props) => {
           <span className={`font-medium ${getStatusColor(order.status)}`}>
             {order.status}
           </span>
-        </div>
-
-        <div className="col-span-1">
           <span className="text-white block">
             {new Date(order.createdAt).toLocaleDateString("en-IN", {
               day: "2-digit",
@@ -123,35 +171,104 @@ const OrderCard = ({ order, onDelete }: Props) => {
         </div>
 
         <div className="col-span-1 flex gap-x-2">
-          <button className="px-3 py-2 bg-purple-500 hover:bg-purple-600 transition-colors rounded-lg text-white text-xs font-medium">
-            Ship
-          </button>
-          
-          <button
-            onClick={() =>
-              router.push(`/orders/create_order?orderId=${order.id}`)
-            }
-            className="bg-white text-black px-2 py-1 rounded hover:bg-gray-200 transition-colors text-xs font-medium"
+          {/* <button
+            className={`px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors
+    ${
+      canShip
+        ? "bg-purple-500 hover:bg-purple-600"
+        : "bg-gray-500 cursor-not-allowed opacity-60"
+    }
+  `}
+            type="button"
+            disabled={!canShip}
+            onClick={() => handleship(order.id)}
           >
-            Edit
+            Ship
+          </button> */}
+
+          <button
+            className={`px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors
+    ${
+      canShip && shippingId !== order.id
+        ? "bg-purple-500 hover:bg-purple-600"
+        : "bg-gray-500 cursor-not-allowed opacity-60"
+    }
+  `}
+            type="button"
+            disabled={!canShip || shippingId === order.id}
+            onClick={() => handleship(order.id)}
+          >
+            {shippingId === order.id ? "Shipping..." : "Ship"}
           </button>
 
-          <DeleteOrderDialog
-            onConfirm={async () => {
-              setIsDeleting(true);
-              await handleDelete();
-            }}
-          />
+          <div className="relative">
+            <button
+              onClick={() =>
+                setOpenMenu(openMenu === order.id ? null : order.id)
+              }
+              className="p-2 rounded hover:bg-[#2b394b]"
+            >
+              ⋮
+            </button>
+
+            {openMenu === order.id && (
+              <div className="absolute right-0 mt-2 w-44 bg-[#1f2b3a] border border-[#38495e] rounded-lg shadow-lg z-50 overflow-hidden">
+                {order.awb_number === null ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        router.push(`/orders/create_order?orderId=${order.id}`);
+                        setOpenMenu(null);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-[#2b394b]"
+                    >
+                      ✏️ Edit Order
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        setIsDeleting(true);
+                        await handleDelete();
+                        setOpenMenu(null);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#2b394b]"
+                    >
+                      🗑 Delete Order
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleCancelOrder();
+                      setOpenMenu(null);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#2b394b]"
+                  >
+                    ❌ Cancel Order
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-{/* medium */}
+      {/* medium */}
       <div className="hidden md:block xl:hidden w-full bg-[#334458] rounded-lg p-4 text-sm">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="flex items-center justify-between col-span-2 lg:col-span-3 border-b border-[#4a5d73] pb-3">
             <div className="flex items-center gap-3">
-              <span className="text-white font-bold text-lg">#{order.id}</span>
-              <span className={`font-medium px-2 py-1 rounded-full text-xs ${getStatusBgColor(order.status)}`}>
+              <span className="text-white font-bold text-lg">
+                {" "}
+                {order.awb_number
+                  ? `AWB: ${order.awb_number}`
+                  : `Order ID: ${order.id}`}
+              </span>
+              <span
+                className={`font-medium px-2 py-1 rounded-full text-xs ${getStatusBgColor(
+                  order.status
+                )}`}
+              >
                 {order.status}
               </span>
             </div>
@@ -183,10 +300,12 @@ const OrderCard = ({ order, onDelete }: Props) => {
           </div>
 
           <div className="space-y-1">
-            <span className="text-gray-400 text-xs">Dimensions</span>
+            <span className="text-gray-400 text-xs">Delivery</span>
             <p className="text-white">
               {order.length}x{order.breadth}x{order.height}
-              <span className="text-gray-400 text-xs ml-1">({order.applicableWeight}kg)</span>
+              <span className="text-gray-400 text-xs ml-1">
+                ({order.applicableWeight}kg)
+              </span>
             </p>
           </div>
 
@@ -194,7 +313,9 @@ const OrderCard = ({ order, onDelete }: Props) => {
             <span className="text-gray-400 text-xs">Delivery</span>
             <p className="text-white">
               {order.address.city}
-              <span className="text-gray-400 text-xs ml-1">({order.address.tag})</span>
+              <span className="text-gray-400 text-xs ml-1">
+                ({order.address.tag})
+              </span>
             </p>
           </div>
 
@@ -218,7 +339,10 @@ const OrderCard = ({ order, onDelete }: Props) => {
             <div className="col-span-2 lg:col-span-3 bg-[#2a3a4a] rounded-lg p-3 mt-2">
               <p className="font-semibold text-sm mb-2 text-white">Products</p>
               {order.products.map((item: any, index: number) => (
-                <div key={index} className="flex justify-between gap-4 text-xs text-gray-300 py-1">
+                <div
+                  key={index}
+                  className="flex justify-between gap-4 text-xs text-gray-300 py-1"
+                >
                   <span className="truncate">{item.product.name}</span>
                   <span>× {item.quantity}</span>
                   <span>₹{item.unitPrice}</span>
@@ -228,24 +352,72 @@ const OrderCard = ({ order, onDelete }: Props) => {
           )}
 
           <div className="col-span-2 lg:col-span-3 flex gap-2 pt-3 border-t border-[#4a5d73] mt-2">
-            <button className="flex-1 px-4 py-2 bg-purple-500 hover:bg-purple-600 transition-colors rounded-lg text-white text-sm font-medium">
+            <button
+              className={`px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors
+    ${
+      canShip
+        ? "bg-purple-500 hover:bg-purple-600"
+        : "bg-gray-500 cursor-not-allowed opacity-60"
+    }
+  `}
+              type="button"
+              disabled={!canShip}
+              onClick={() => handleship(order.id)}
+            >
               Ship
             </button>
-            
-            <button
-              onClick={() =>
-                router.push(`/orders/create_order?orderId=${order.id}`)
-              }
-              className="flex-1 bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-            >
-              Edit
-            </button>
-            <DeleteOrderDialog
-              onConfirm={async () => {
-                setIsDeleting(true);
-                await handleDelete();
-              }}
-            />
+
+            <div className="relative">
+              <button
+                onClick={() =>
+                  setOpenMenu(openMenu === order.id ? null : order.id)
+                }
+                className="p-2 rounded hover:bg-[#2b394b]"
+              >
+                ⋮
+              </button>
+
+              {openMenu === order.id && (
+                <div className="absolute right-0 mt-2 w-44 bg-[#1f2b3a] border border-[#38495e] rounded-lg shadow-lg z-50 overflow-hidden">
+                  {order.awb_number === "" ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          router.push(
+                            `/orders/create_order?orderId=${order.id}`
+                          );
+                          setOpenMenu(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#2b394b]"
+                      >
+                        ✏️ Edit Order
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          setIsDeleting(true);
+                          await handleDelete();
+                          setOpenMenu(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#2b394b]"
+                      >
+                        🗑 Delete Order
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        handleCancelOrder();
+                        setOpenMenu(null);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#2b394b]"
+                    >
+                      ❌ Cancel Order
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -254,8 +426,17 @@ const OrderCard = ({ order, onDelete }: Props) => {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="text-white font-bold text-lg">#{order.id}</span>
-            <span className={`font-medium px-2 py-1 rounded-full text-xs ${getStatusBgColor(order.status)}`}>
+            <span className="text-white font-bold text-lg">
+              {" "}
+              {order.awb_number
+                ? `AWB: ${order.awb_number}`
+                : `Order ID: ${order.id}`}
+            </span>
+            <span
+              className={`font-medium px-2 py-1 rounded-full text-xs ${getStatusBgColor(
+                order.status
+              )}`}
+            >
               {order.status}
             </span>
           </div>
@@ -290,7 +471,9 @@ const OrderCard = ({ order, onDelete }: Props) => {
             <span className="text-gray-400 text-xs">Dimensions</span>
             <span className="text-white">
               {order.length}x{order.breadth}x{order.height}
-              <span className="text-gray-400 text-xs ml-1">({order.applicableWeight}kg)</span>
+              <span className="text-gray-400 text-xs ml-1">
+                ({order.applicableWeight}kg)
+              </span>
             </span>
           </div>
 
@@ -298,7 +481,9 @@ const OrderCard = ({ order, onDelete }: Props) => {
             <span className="text-gray-400 text-xs">Delivery</span>
             <span className="text-white text-right">
               {order.address.city}
-              <span className="text-gray-400 text-xs ml-1">({order.address.tag})</span>
+              <span className="text-gray-400 text-xs ml-1">
+                ({order.address.tag})
+              </span>
             </span>
           </div>
 
@@ -314,19 +499,29 @@ const OrderCard = ({ order, onDelete }: Props) => {
             >
               <span className="text-gray-400 text-xs">Package Details</span>
               <svg
-                className={`w-4 h-4 text-gray-400 transition-transform ${showProducts ? 'rotate-180' : ''}`}
+                className={`w-4 h-4 text-gray-400 transition-transform ${
+                  showProducts ? "rotate-180" : ""
+                }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
 
             {showProducts && (
               <div className="bg-[#2a3a4a] rounded-lg p-3 mt-2">
                 {order.products.map((item: any, index: number) => (
-                  <div key={index} className="flex justify-between gap-2 text-xs text-gray-300 py-1">
+                  <div
+                    key={index}
+                    className="flex justify-between gap-2 text-xs text-gray-300 py-1"
+                  >
                     <span className="truncate flex-1">{item.product.name}</span>
                     <span>× {item.quantity}</span>
                     <span>₹{item.unitPrice}</span>
@@ -338,24 +533,69 @@ const OrderCard = ({ order, onDelete }: Props) => {
         </div>
 
         <div className="flex gap-2 pt-4 mt-3 border-t border-[#4a5d73]">
-          <button className="flex-1 px-3 py-2.5 bg-purple-500 hover:bg-purple-600 transition-colors rounded-lg text-white text-sm font-medium">
+          <button
+            className={`px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors
+    ${
+      canShip
+        ? "bg-purple-500 hover:bg-purple-600"
+        : "bg-gray-500 cursor-not-allowed opacity-60"
+    }
+  `}
+            type="button"
+            disabled={!canShip}
+            onClick={() => handleship(order.id)}
+          >
             Ship
           </button>
-          <button
-            onClick={() =>
-              router.push(`/orders/create_order?orderId=${order.id}`)
-            }
-            className="flex-1 bg-white text-black px-3 py-2.5 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-          >
-            Edit
-          </button>
-          <DeleteOrderDialog
-            onConfirm={async () => {
-              setIsDeleting(true);
-              await handleDelete();
-            }}
-          />
-          
+          <div className="relative">
+            <button
+              onClick={() =>
+                setOpenMenu(openMenu === order.id ? null : order.id)
+              }
+              className="p-2 rounded hover:bg-[#2b394b]"
+            >
+              ⋮
+            </button>
+
+            {openMenu === order.id && (
+              <div className="absolute right-0 mt-2 w-44 bg-[#1f2b3a] border border-[#38495e] rounded-lg shadow-lg z-50 overflow-hidden">
+                {order.awb_number === "" ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        router.push(`/orders/create_order?orderId=${order.id}`);
+                        setOpenMenu(null);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-[#2b394b]"
+                    >
+                      ✏️ Edit Order
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        setIsDeleting(true);
+                        await handleDelete();
+                        setOpenMenu(null);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#2b394b]"
+                    >
+                      🗑 Delete Order
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleCancelOrder();
+                      setOpenMenu(null);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#2b394b]"
+                  >
+                    ❌ Cancel Order
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
