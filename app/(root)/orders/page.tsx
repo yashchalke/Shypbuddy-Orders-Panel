@@ -30,14 +30,12 @@ export default function Page() {
     );
   };
 
-  // ✅ applied filters
   const [paymentType, setPaymentType] = useState({
     prepaid: false,
     cod: false,
   });
   const [filters, setFilters] = useState({ tag: "", hsn: "", sku: "" });
 
-  // ✅ draft filters (sidebar)
   const [draftPaymentType, setDraftPaymentType] = useState(paymentType);
   const [draftFilters, setDraftFilters] = useState(filters);
 
@@ -132,8 +130,8 @@ export default function Page() {
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
           onApply={(range) => {
-            setFilters(draftFilters); // APPLY product filters
-            setPaymentType(draftPaymentType); // APPLY payment filters
+            setFilters(draftFilters); 
+            setPaymentType(draftPaymentType); 
             setPage(1);
             setDateRange(range);
             fetchOrders(orderid, draftFilters, range, 1);

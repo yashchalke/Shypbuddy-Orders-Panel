@@ -2,6 +2,11 @@
 
 import { prisma } from "@/lib/prisma";
 
+function generateorderid(orderId: number) {
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `ORD-${orderId}-${rand}`;
+}
+
 export async function cancelShipment(orderId: number) {
   try {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
@@ -31,7 +36,7 @@ export async function cancelShipment(orderId: number) {
 
     const updated = await prisma.order.update({
       where: { id: orderId },
-      data: { awb_number:null,delhivery_partner:null ,status: "NEW" },
+      data: {courier_ref:generateorderid(orderId),awb_number:null,delhivery_partner:null ,status: "NEW" },
     });
 
     return { success: true, message:"Shipment Cancelled Successfully", order: updated };

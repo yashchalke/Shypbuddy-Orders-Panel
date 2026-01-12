@@ -9,6 +9,7 @@ export async function ensureWarehouseExists(orderId: number) {
     include: {
       buyer: true,
       address: true,
+      rtoAddress:true,
       products: { include: { product: true } },
     },
   });

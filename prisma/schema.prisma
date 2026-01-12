@@ -106,6 +106,7 @@ model Order {
   //applicable weight
   id              Int    @id @default(autoincrement())
   orderNo         Int    @default(autoincrement())
+  courier_ref     String?
   awb_number      String? 
   delhivery_partner String?
   userId          Int

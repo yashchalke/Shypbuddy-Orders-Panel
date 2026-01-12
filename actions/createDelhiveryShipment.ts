@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { ensureWarehouseExists } from "./ensureWarehouseExists";
 
-export async function createDelhiveryShipment(orderId: number) {
+export async function createDelhiveryShipment(orderId: number,courier_ref:number) {
   if (!orderId) throw new Error("ORDER_ID_REQUIRED");
 
   const order = await ensureWarehouseExists(orderId);
@@ -19,14 +19,14 @@ export async function createDelhiveryShipment(orderId: number) {
         country: "India",
         phone: order!.buyer.phone,
 
-        order: String(order!.id),
+        order: String(order!.courier_ref ?? order!.id),
         payment_mode: order!.paymentMethod === "COD" ? "COD" : "Prepaid",
 
-        return_pin: order!.address.pincode,
-        return_city: order!.address.city,
-        return_phone: order!.address.phone,
-        return_add: order!.address.address,
-        return_state: order!.address.state,
+        return_pin: order!.rtoAddress.pincode,
+        return_city: order!.rtoAddress.city,
+        return_phone: order!.rtoAddress.phone,
+        return_add: order!.rtoAddress.address,
+        return_state: order!.rtoAddress.state,
         return_country: "India",
 
         products_desc: order!.products.map(p => p.product.name).join(", "),
@@ -44,11 +44,13 @@ export async function createDelhiveryShipment(orderId: number) {
         shipment_width: order!.breadth,
         shipment_height: order!.height,
         shipment_length: order!.length,
-        weight: order!.applicableWeight,
+        weight: Math.ceil(Number(order!.applicableWeight) * 1000),
       },
     ],
     pickup_location: { name: order!.address.code },
   };
+
+  console.log(payload);
 
   const body = new URLSearchParams();
   body.append("format", "json");

@@ -63,18 +63,23 @@ const OrderCard = ({ order, onDelete, onUpdate }: Props) => {
     try {
       setShippingId(id);
 
-      const res = await fetch("/api/Ship_order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: id }),
-      });
+      // const res = await fetch("/api/Ship_order", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ orderId: id }),
+      // });
 
-      const data = await res.json();
+      const res = await shipOrderFlow(order.id,order.courier_ref);
 
-      if (!res.ok) throw new Error(data.message || "Failed to create shipment");
+      // const data = await res.json();
 
-      toast.success(data.message || "Shipment Created Successfully");
-      onUpdate(data.order);
+      // if (!res.ok) throw new Error(data.message || "Failed to create shipment");
+      if (res.success != true) {
+      toast.error(res.message);
+      return;
+    }
+      toast.success(res.message || "Shipment Created Successfully");
+      onUpdate(res.order);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     } finally {

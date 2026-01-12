@@ -215,8 +215,8 @@ export async function POST(req: NextRequest) {
 
     jwt.verify(token, process.env.JWT_SECRET!);
 
-    const { orderId } = await req.json();
-    const result = await shipOrderFlow(orderId);
+    const { orderId,courier_ref  } = await req.json();
+    const result = await shipOrderFlow(orderId,courier_ref);
 
     return NextResponse.json(result);
   } catch (err: any) {

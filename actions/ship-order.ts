@@ -2,23 +2,25 @@
 import { ensureWarehouseExists } from "./ensureWarehouseExists";
 import { createDelhiveryShipment } from "./createDelhiveryShipment";
 
-type ShipOrderResponse = {
-  success: boolean;
-  message: string;
-  order?: {
-    id: number;
-    awb_number: string;
-    status: string;
-  };
-};
+// type ShipOrderResponse = {
+//   success: boolean;
+//   message: string;
+//   order?: {
+//     id: number;
+//     awb_number: string;
+//     status: string;
+//   };
+// };
 
 
-export async function shipOrderFlow(orderId: number) {
+export async function shipOrderFlow(orderId: number,courier_ref:number) {
   if (!orderId) throw new Error("ORDER_ID_REQUIRED");
 
   await ensureWarehouseExists(orderId);
 
-  const shipment = await createDelhiveryShipment(orderId);
+  const shipment = await createDelhiveryShipment(orderId,courier_ref);
+
+  
 
   return {
     success: true,
